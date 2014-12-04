@@ -5,8 +5,47 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>edu.mayo.aml.tooling.plugin</groupId>
-    <artifactId>AMLPlugin</artifactId>
+    <artifactId>AMLMDPlugin</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <properties>
+        <magicDraw>/Applications/Cameo Enterprise Architecture</magicDraw>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <configuration>
+                            <tasks>
+                                <copy verbose="true"
+                                      file="target/${project.build.finalName}.${project.packaging}"
+                                      todir="${magicDraw}/plugins/${project.groupId}" overwrite="true" />
+                                <copy verbose="true"
+                                      file="src/main/resources/plugin.xml"
+                                      todir="${magicDraw}/plugins/${project.groupId}" overwrite="true" />
+                            </tasks>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>local.dummy</groupId>
+            <artifactId>md_api.jar</artifactId>
+            <version>0.0.1</version>
+            <scope>system</scope>
+            <systemPath>${magicDraw}/lib/md_api.jar</systemPath>
+        </dependency>
+    </dependencies>
 
 </project>
