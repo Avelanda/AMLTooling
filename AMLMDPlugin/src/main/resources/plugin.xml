@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin
+        id="AMLTooling.AMLMDPlugin"
+        name="AMLMDPlugin"
+        version="1.0"
+        provider-name="Deepak Sharma"
+        class="edu.mayo.aml.tooling.plugin.MDPluginMain">
+    <requires>
+        <api version="1.0"/>
+    </requires>
+    <runtime>
+        <library name="AMLMDPlugin-1.0-SNAPSHOT.jar"/>
+    </runtime>
+</plugin>
