@@ -27,6 +27,12 @@
                                 <copy verbose="true"
                                       file="src/main/resources/plugin.xml"
                                       todir="${magicDraw}/plugins/${project.groupId}" overwrite="true" />
+                                <!--copy verbose="true"
+                                      file="target/${project.build.finalName}.${project.packaging}"
+                                      todir="plugins" overwrite="true" />
+                                <copy verbose="true"
+                                      file="src/main/resources/plugin.xml"
+                                      todir="plugins" overwrite="true" /-->
                             </tasks>
                         </configuration>
                         <goals>

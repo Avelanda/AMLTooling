@@ -16,14 +16,14 @@ public class MDPluginMain extends Plugin
     @Override
     public void init()
     {
-        javax.swing.JOptionPane.showMessageDialog(null, "AML MD Plugin init");
-        System.out.print("my plugin got executed");
+        javax.swing.JOptionPane.showMessageDialog(null, "AML MD Plugin init.");
+        System.out.print("my plugin got executed again");
     }
 
     @Override
     public boolean close()
     {
-        javax.swing.JOptionPane.showMessageDialog(null, "AML MD Plugin close");
+        javax.swing.JOptionPane.showMessageDialog(null, "AML MD Plugin close.");
         return true;
     }
 
