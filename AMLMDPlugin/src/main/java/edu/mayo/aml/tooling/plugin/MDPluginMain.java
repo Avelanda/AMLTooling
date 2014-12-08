@@ -11,11 +11,17 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.core.project.ProjectsManager;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
-import com.nomagic.uml2.impl.ElementsFactory;
+import com.nomagic.magicdraw.uml.DiagramTypeConstants;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.impl.ElementsFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -44,13 +50,92 @@ public class MDPluginMain extends Plugin
 		/*
 		 * Add new action to the category.
 		 */
-        amlcategory.addAction(new NMAction("Add Package", "Add Package", null, null)
+        amlcategory.addAction(new NMAction("Add Example Package", "Add Example Package", null, null)
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
                 //javax.swing.JOptionPane.showMessageDialog(null, "This will create a Package");
                 String packageName = JOptionPane.showInputDialog("Enter package name:");
+                if (packageName != null)
+                {
+                    SessionManager.getInstance().createSession("Adding a package " + packageName);
+                    ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+                    ModelElementsManager mm = ModelElementsManager.getInstance();
+                    Package np = ef.createPackageInstance();
+                    np.setName(packageName);
+                    np.setOwner(Application.getInstance().getProject().getModel());
+
+                    Class clsA = ef.createClassInstance();
+                    clsA.setName("Person");
+
+                    Property property1 = ef.createPropertyInstance();
+                    property1.setName("name");
+                    property1.setVisibility(VisibilityKindEnum.PUBLIC);
+
+                    Property property2 = ef.createPropertyInstance();
+                    property2.setName("id");
+                    property2.setVisibility(VisibilityKindEnum.PRIVATE);
+
+                    Property property3 = ef.createPropertyInstance();
+                    property3.setName("enrolledIn");
+                    property3.setVisibility(VisibilityKindEnum.PUBLIC);
+
+                   //property3.setLowerValue(MultiplicityType));
+
+                    Classifier stringType = ModelHelper.findDataTypeFor(Application.getInstance().getProject(), "String", null);
+                    Classifier integerType = ModelHelper.findDataTypeFor(Application.getInstance().getProject(), "Integer", null);
+
+                    property1.setType(stringType);
+                    property2.setType(integerType);
+                    property3.setType(stringType);
+
+                    Class clsB = ef.createClassInstance();
+                    clsB.setName("ClassB");
+
+                    Relationship rel = ef.createAssociationInstance();
+                    rel.set_representationText("AdjacentTo");
+                    //rel.setID("AdjcentToid");
+
+                    rel.setOwner(clsA);
+                    ModelHelper.setClientElement(rel, clsB);
+                    ModelHelper.setSupplierElement(rel, clsA);
+
+
+                    try
+                    {
+                        mm.addElement(clsA, np);
+                        mm.addElement(property1, clsA);
+
+                        mm.addElement(property2, clsB);
+                        mm.addElement(property3, clsB);
+
+                        mm.addElement(rel, np);
+
+                        Diagram cd = mm.createDiagram(DiagramTypeConstants.UML_CLASS_DIAGRAM, np);
+                        cd.setName(np.getName() + "_classDiagram");
+
+                    }
+                    catch (ReadOnlyElementException e1)
+                    {
+                        e1.printStackTrace();
+                    }
+
+                    clsB.setOwner(np);
+
+
+                    SessionManager.getInstance().closeSession();
+                }
+            }
+        });
+
+        amlcategory.addAction(new NMAction("Import ADL Archetype:", "Import ADL Archetype", null, null)
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                //javax.swing.JOptionPane.showMessageDialog(null, "This will create a Package");
+                String packageName = JOptionPane.showInputDialog("Archetype File (.adl):");
                 if (packageName != null)
                 {
                     SessionManager.getInstance().createSession("Adding a package " + packageName);
