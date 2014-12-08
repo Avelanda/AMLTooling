@@ -11,8 +11,11 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.core.project.ProjectsManager;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
+import com.nomagic.uml2.impl.ElementsFactory;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -46,7 +49,17 @@ public class MDPluginMain extends Plugin
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                javax.swing.JOptionPane.showMessageDialog(null, "This will create a Package");
+                //javax.swing.JOptionPane.showMessageDialog(null, "This will create a Package");
+                String packageName = JOptionPane.showInputDialog("Enter package name:");
+                if (packageName != null)
+                {
+                    SessionManager.getInstance().createSession("Adding a package " + packageName);
+                    ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+                    Package np = ef.createPackageInstance();
+                    np.setName(packageName);
+                    np.setOwner(Application.getInstance().getProject().getModel());
+                    SessionManager.getInstance().closeSession();
+                }
             }
         });
 
