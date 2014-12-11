@@ -3,6 +3,7 @@ package edu.mayo.aml.tooling.batch;
 import com.nomagic.magicdraw.commandline.CommandLine;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.core.project.ProjectsManager;
@@ -15,9 +16,16 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.impl.ElementsFactory;
+import edu.mayo.aml.tooling.auxiliary.ModelUtils;
+import edu.mayo.aml.tooling.auxiliary.ProjectUtils;
+import edu.mayo.aml.tooling.auxiliary.Utils;
+import org.apache.log4j.Appender;
+import org.apache.log4j.Logger;
+import org.apache.log4j.Priority;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * AML Batch using MD OpenAPIs
@@ -25,118 +33,63 @@ import java.io.IOException;
  */
 public class AMLBatchMain extends CommandLine
 {
-    public String projectFile = "/Users/dks02/A123/MagicDrawWS/TestUMLByDeepak.mdzip";
+    public Logger logger = Logger.getRootLogger();
+    private AMLBatchAuxiliary aux = new AMLBatchAuxiliary(this);
+
+
     public static void main( String[] args )
     {
-        System.out.println( "Batch STARTED" );
-        new AMLBatchMain().launch(args);
+        AMLBatchMain abm = new AMLBatchMain();
+        abm.log( "Batch STARTED" );
+        abm.launch(args);
+        abm.log("Batch ENDED");
+    }
+
+    public void log(String msg)
+    {
+        this.logger.info(msg);
     }
 
     @Override
     protected byte execute()
     {
-        ProjectsManager pm = Application.getInstance().getProjectsManager();
-        File file = new File(projectFile);
-        Project project = null;
-        ProjectDescriptor des = null;
-        System.out.println( "Batch 1" );
-        if (file.exists())
+        Project project = ProjectUtils.getProject();
+
+        try
         {
-            System.out.println( "Batch 2" );
-            des = ProjectDescriptorsFactory.createProjectDescriptor(file.toURI());
-            pm.loadProject(des, true);
-            project = pm.getActiveProject();
-        }
-        else
-        {
-            System.out.println("Batch 3");
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            project = pm.createProject();
-        }
             SessionManager.getInstance().createSession("Creating Stuff");
-            ElementsFactory ef = project.getElementsFactory();
-            ModelElementsManager mm = ModelElementsManager.getInstance();
+            // Clean existing Packages
+            aux.removeExistingPackages(project);
 
-//            try
-//            {
-//                for (Package e : ModelHelper.findInParent(project.getModel(), );)
-//                    mm.removeElement(e);
-//            }
-//            catch (ReadOnlyElementException e1)
-//            {
-//                    e1.printStackTrace();
-//            }
-
-            com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package np = ef.createPackageInstance();
-            np.setName("TestDeepak");
-            np.setOwner(project.getModel());
-
-            com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class clsA = ef.createClassInstance();
-            clsA.setName("Person");
-
-            Property property1 = ef.createPropertyInstance();
-            property1.setName("name");
-            property1.setVisibility(VisibilityKindEnum.PUBLIC);
-
-            Property property2 = ef.createPropertyInstance();
-            property2.setName("id");
-            property2.setVisibility(VisibilityKindEnum.PRIVATE);
-
-            Property property3 = ef.createPropertyInstance();
-            property3.setName("enrolledIn");
-            property3.setVisibility(VisibilityKindEnum.PUBLIC);
+            Package np = ModelUtils.createPackage("TestDeepak-" + Utils.getCurrentTimeStampAsSuffix(), project.getModel());
+            Class clsA = ModelUtils.createClass("Person", np);
+            Class clsB = ModelUtils.createClass("Address", np);
 
             Classifier stringType = ModelHelper.findDataTypeFor(Application.getInstance().getProject(), "String", null);
             Classifier integerType = ModelHelper.findDataTypeFor(Application.getInstance().getProject(), "Integer", null);
 
-            property1.setType(stringType);
-            property2.setType(integerType);
-            property3.setType(stringType);
+            Property property11 = ModelUtils.createProperty("name", stringType, VisibilityKindEnum.PUBLIC, clsA);
+            Property property12 = ModelUtils.createProperty("SSN", stringType, VisibilityKindEnum.PRIVATE, clsA);
 
-            Class clsB = ef.createClassInstance();
-            clsB.setName("ClassB");
+            Property property21 = ModelUtils.createProperty("houseNumber", integerType, VisibilityKindEnum.PUBLIC, clsB);
+            Property property22 = ModelUtils.createProperty("street", stringType, VisibilityKindEnum.PUBLIC, clsB);
+            Property property23 = ModelUtils.createProperty("city", stringType, VisibilityKindEnum.PUBLIC, clsB);
+            Property property24 = ModelUtils.createProperty("state", stringType, VisibilityKindEnum.PUBLIC, clsB);
+            Property property25 = ModelUtils.createProperty("zip", integerType, VisibilityKindEnum.PUBLIC, clsB);
 
-            Relationship rel = ef.createAssociationInstance();
-            rel.set_representationText("AdjacentTo");
+            Relationship rel = ModelUtils.createRelation("hasAddress", "addressOf", clsA, clsB, true);
 
-            rel.setOwner(clsA);
-            ModelHelper.setClientElement(rel, clsB);
-            ModelHelper.setSupplierElement(rel, clsA);
-
-
-            try
-            {
-                mm.addElement(clsA, np);
-                mm.addElement(property1, clsA);
-
-                mm.addElement(property2, clsB);
-                mm.addElement(property3, clsB);
-
-                mm.addElement(rel, np);
-
-                Diagram cd = mm.createDiagram(DiagramTypeConstants.UML_CLASS_DIAGRAM, np);
-                cd.setName(np.getName() + "_classDiagram");
-
-            }
-            catch (ReadOnlyElementException e1)
-            {
-                e1.printStackTrace();
-            }
-
-            clsB.setOwner(np);
+            Diagram diag = ModelUtils.createDiagram(np.getName() + "_classDiagram", DiagramTypeConstants.UML_CLASS_DIAGRAM, np);
 
             SessionManager.getInstance().closeSession();
 
-            des = ProjectDescriptorsFactory.createLocalProjectDescriptor(project, file);
+        }
+        catch (ReadOnlyElementException e1)
+        {
+            e1.printStackTrace();
+        }
 
-            pm.saveProject(des, false);
-
-
-        System.out.println( "Batch ENDED" );
+        ProjectUtils.saveProject(project);
         return 0;
     }
 }
