@@ -10,7 +10,7 @@ public class Utils
 {
     public static String getCurrentTimeStampAsSuffix()
     {
-        SimpleDateFormat sdfDate = new SimpleDateFormat("yyyyMMddHHmmss");
+        SimpleDateFormat sdfDate = new SimpleDateFormat("yyyyMMddHHmm");
         Date now = new Date();
         String strDate = sdfDate.format(now);
         return strDate;
