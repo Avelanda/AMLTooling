@@ -26,7 +26,7 @@ public class ClassPathManager
 				 									  String fileNameToMatch, 
 				 									  boolean addEvenIfAlreadyThere) 
 		 {
-			 System.out.println("Calling with " + startDirectory.getAbsolutePath() + " and " + fileNameToMatch);
+			 AU.debug("Calling with " + startDirectory.getAbsolutePath() + " and " + fileNameToMatch);
 			 if (fileNameToMatch == null)
 				 return null;
 			 

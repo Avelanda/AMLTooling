@@ -5,15 +5,15 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
- * Unit test for simple AMLBatchMain.
+ * Unit adl2aml for simple AMLBatchMain.
  */
 public class AMLBatchMainTest
     extends TestCase
 {
     /**
-     * Create the test case
+     * Create the adl2aml case
      *
-     * @param testName name of the test case
+     * @param testName name of the adl2aml case
      */
     public AMLBatchMainTest(String testName)
     {

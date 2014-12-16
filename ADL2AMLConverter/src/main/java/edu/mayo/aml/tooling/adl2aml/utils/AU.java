@@ -2,11 +2,11 @@ package edu.mayo.aml.tooling.adl2aml.utils;
 
 import java.io.*;
 
-public class LU
+public class AU
 {
 	public static final String addNLs(String str)
 	{
-		if (!LU.isNull(str))
+		if (!AU.isNull(str))
 			str += "\n";
 		return str;
 	}
@@ -45,11 +45,11 @@ public class LU
 			}
 
 			if ((result != null)&&(result.startsWith("Could not")))
-                System.out.println(result);
+                AU.warn(result);
 		}
 		catch (Exception exp) 
 		{
-            System.out.println("Error while trying to add file to classpath");
+            AU.error("Error while trying to add file to classpath");
 			exp.printStackTrace();
 		}
 		
@@ -132,7 +132,7 @@ public class LU
 	       if (doNext) 
 	       {
 	    	  String c = s.getClassName();
-               System.out.println("Executing [" + ((c == null) ? "" : (c.substring(c.lastIndexOf(".") + 1)))
+              AU.info("Executing [" + ((c == null) ? "" : (c.substring(c.lastIndexOf(".") + 1)))
                        + "." + s.getMethodName() + "()]");
 	          return;
 	       }
@@ -140,4 +140,23 @@ public class LU
 	   }
 	}
 
+    public static void debug(String message)
+    {
+        System.out.println("DEBUG:" + message);
+    }
+
+    public static void info(String message)
+    {
+        System.out.println("INFO:" + message);
+    }
+
+    public static void warn(String message)
+    {
+        System.out.println("WARN:" + message);
+    }
+
+    public static void error(String message)
+    {
+        System.out.println("ERROR:" + message);
+    }
 }
