@@ -8,35 +8,25 @@ import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
-import com.nomagic.magicdraw.uml.symbols.DisplayRelatedSymbols;
-import com.nomagic.magicdraw.uml.symbols.DisplayRelatedSymbolsInfo;
-import com.nomagic.magicdraw.uml.symbols.LinkType;
-import com.nomagic.magicdraw.uml.symbols.shapes.ShapeElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.InterfaceRealization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.StereotypeClass;
 import edu.mayo.aml.tooling.auxiliary.ModelUtils;
 import edu.mayo.aml.tooling.auxiliary.ProjectUtils;
 import edu.mayo.aml.tooling.auxiliary.Utils;
 import org.apache.log4j.Logger;
 
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * AML Batch using MD OpenAPIs
  *
  */
-public class AMLBatchMain extends CommandLine
+public class AMLBatchMainExampleProject extends CommandLine
 {
     public Logger logger = Logger.getRootLogger();
     private AMLBatchAuxiliary aux = new AMLBatchAuxiliary(this);
@@ -44,7 +34,7 @@ public class AMLBatchMain extends CommandLine
 
     public static void main( String[] args )
     {
-        AMLBatchMain abm = new AMLBatchMain();
+        AMLBatchMainExampleProject abm = new AMLBatchMainExampleProject();
         abm.log( "Batch STARTED" );
         abm.launch(args);
         abm.log("Batch ENDED");

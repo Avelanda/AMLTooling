@@ -18,6 +18,10 @@ public class AMLBatchMainTest
     public AMLBatchMainTest(String testName)
     {
         super( testName );
+        System.out.println("in the test...");
+        //AMLBatchMainExampleProject mainExampleProject = new AMLBatchMainExampleProject();
+        //mainExampleProject.launch(null);
+        System.out.println("done...");
     }
 
     /**

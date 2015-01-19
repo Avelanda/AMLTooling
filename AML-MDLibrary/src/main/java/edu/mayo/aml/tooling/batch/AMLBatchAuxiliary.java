@@ -2,7 +2,6 @@ package edu.mayo.aml.tooling.batch;
 
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
 import edu.mayo.aml.tooling.auxiliary.ModelUtils;
@@ -14,9 +13,9 @@ import java.util.Collection;
  */
 public class AMLBatchAuxiliary
 {
-    AMLBatchMain mainClass = null;
+    AMLBatchMainExampleProject mainClass = null;
 
-    public AMLBatchAuxiliary(AMLBatchMain main)
+    public AMLBatchAuxiliary(AMLBatchMainExampleProject main)
     {
         mainClass = main;
     }
