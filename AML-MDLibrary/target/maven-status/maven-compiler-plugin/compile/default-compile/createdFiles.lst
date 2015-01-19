@@ -1,0 +1,6 @@
+edu/mayo/aml/tooling/batch/AMLBatchAuxiliary.class
+edu/mayo/aml/tooling/batch/AMLBatchEnvironment.class
+edu/mayo/aml/tooling/auxiliary/Utils.class
+edu/mayo/aml/tooling/auxiliary/ModelUtils.class
+edu/mayo/aml/tooling/auxiliary/ProjectUtils.class
+edu/mayo/aml/tooling/batch/AMLBatchMainExampleProject.class
