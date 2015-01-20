@@ -12,7 +12,7 @@ import java.util.ResourceBundle;
  */
 public class AMLBatchEnvironment
 {
-    private String propertyFileName = "amlbatch.properties";
+    public String propertyFileName = "amlbatch.properties";
     private Properties properties = null;
 
     public void loadProperties()

@@ -15,7 +15,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>edu.mayo.aml.tooling.amlmdlib</groupId>
+            <groupId>edu.mayo.aml.tooling.batch</groupId>
             <artifactId>AML-MDLibrary</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>

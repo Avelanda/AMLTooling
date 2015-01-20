@@ -51,6 +51,30 @@ public class ProjectUtils
         return getProjectAtLocation(fileName);
     }
 
+    public static File getDefaultProjectFile()
+    {
+        AMLBatchEnvironment env = new AMLBatchEnvironment();
+        String fileName = env.getProjectFileName();
+        return new File(fileName);
+    }
+
+    public static Project createProject()
+    {
+        return Application.getInstance().getProjectsManager().createProject();
+    }
+
+    public static void setActiveProject(Project project)
+    {
+        ProjectsManager manager = Application.getInstance().getProjectsManager();
+        if (project == null)
+            return;
+
+        if (manager.isProjectActive(project))
+            return;
+
+        manager.setActiveProject(project);
+    }
+
     public static void saveProject(Project project)
     {
         if (project == null)
@@ -58,6 +82,7 @@ public class ProjectUtils
 
         ProjectsManager pm = Application.getInstance().getProjectsManager();
         ProjectDescriptor des = ProjectDescriptorsFactory.getDescriptorForProject(project);
-        pm.saveProject(des, false);
+
+        pm.saveProject(des, true);
     }
 }
