@@ -1,5 +1,7 @@
 package edu.mayo.aml.tooling.adl2aml;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import org.openehr.jaxb.am.Archetype;
 
 import java.util.Vector;

@@ -29,8 +29,6 @@ import java.util.Arrays;
 public class AMLBatchMainExampleProject extends CommandLine
 {
     public Logger logger = Logger.getRootLogger();
-    private AMLBatchAuxiliary aux = new AMLBatchAuxiliary(this);
-
 
     public static void main( String[] args )
     {
@@ -54,7 +52,8 @@ public class AMLBatchMainExampleProject extends CommandLine
         {
             SessionManager.getInstance().createSession("Creating Stuff");
             // Clean existing Packages
-            aux.removeExistingPackages(project);
+            ModelUtils.removeAllPackages(project);
+            ModelUtils.removeAllProfiles(project);
 
             Package np = ModelUtils.createPackage("TestDeepak-" + Utils.getCurrentTimeStampAsSuffix(), project.getModel());
 

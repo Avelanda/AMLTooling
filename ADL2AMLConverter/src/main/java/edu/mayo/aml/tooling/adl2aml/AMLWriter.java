@@ -1,18 +1,12 @@
 package edu.mayo.aml.tooling.adl2aml;
 
+import com.google.common.base.Preconditions;
 import com.nomagic.magicdraw.commandline.CommandLine;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
-import com.nomagic.magicdraw.core.project.ProjectsManager;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import edu.mayo.aml.tooling.adl2aml.utils.AU;
-import edu.mayo.aml.tooling.auxiliary.ProjectUtils;
-import edu.mayo.aml.tooling.batch.AMLBatchAuxiliary;
 import org.apache.log4j.Logger;
 import org.openehr.jaxb.am.Archetype;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,25 +35,32 @@ public class AMLWriter extends CommandLine
     @Override
     protected byte execute()
     {
+        // Start an AML Magic Draw Project which will contain all new UML entities
         amlProject = new AMLMDProject();
-        if (amlProject.getAMLMDProject() == null)
+        if (amlProject.getProject() == null)
             logger.error("Failed to initialize the base project - to start AML Conversion !! Exiting...");
 
+        amlProject.init();
+        Preconditions.checkNotNull(amlProject.getRootPackages());
+
         this.convert();
+
+        // Save Project at the end of conversion
+        amlProject.save();
+
+        amlProject.closeSession();
         return 0;
     }
 
     public void convert()
     {
+        Preconditions.checkState(!archetypes.isEmpty());
+
         int total = archetypes.size();
         int failed = 0;
         List<String> failedFiles = new ArrayList<String>();
 
-        if (archetypes.isEmpty())
-            AU.warn("No Archetype to convert!!");
-
         AU.info("Converting " + archetypes.size() + " archetypes...");
-
         for (Archetype archetype : archetypes.values())
         {
             if (toFiler && (!helper.toProecess(archetype)))
@@ -72,7 +73,6 @@ public class AMLWriter extends CommandLine
                 AU.debug("Description: " + archetype.getDescription().getDetails().get(0).getPurpose());
 
         }
-
         AU.debug(" Total=" + total +
                  " Success=" + (total - failed) +
                  " Failed=" + failed);

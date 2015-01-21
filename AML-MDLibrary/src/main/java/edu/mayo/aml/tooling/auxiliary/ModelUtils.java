@@ -17,8 +17,11 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.nomagic.magicdraw.openapi.uml.ModelElementsManager.getInstance;
 
@@ -50,6 +53,58 @@ public class ModelUtils
         np.setOwner(parent);
 
         return np;
+    }
+
+    public static Collection<Package> findPackageForMatchingName(Project project, String nameRegex)
+    {
+        ArrayList<Package> matching = new ArrayList<Package>();
+        for (Package pkg : getAllPackages(project))
+            if (pkg.getName().matches(nameRegex))
+                matching.add(pkg);
+
+        return matching;
+    }
+
+    public static Collection<Package> findPackageForMatchingQN(Project project, String qnRegex)
+    {
+        ArrayList<Package> matching = new ArrayList<Package>();
+        for (Package pkg : getAllPackages(project))
+            if (pkg.getQualifiedName().matches(qnRegex))
+                matching.add(pkg);
+
+        return matching;
+    }
+
+    public static void removeAllPackages(Project project)
+    {
+        try
+        {
+            ModelElementsManager mm = ModelElementsManager.getInstance();
+            Collection<Package> allPkgs = ModelUtils.getAllPackages(project);
+            for (Package pkg : allPkgs)
+                if (pkg.canBeDeleted())
+                    mm.removeElement(pkg);
+        }
+        catch (Exception e1)
+        {
+            e1.printStackTrace();
+        }
+    }
+
+    public static void removeAllProfiles(Project project)
+    {
+        try
+        {
+            ModelElementsManager mm = ModelElementsManager.getInstance();
+            Collection<Profile> allProfiles = ModelUtils.getAllProfiles(project);
+            for (Profile profile : allProfiles)
+                if (profile.canBeDeleted())
+                    mm.removeElement(profile);
+        }
+        catch (Exception e1)
+        {
+            e1.printStackTrace();
+        }
     }
 
     public static Class createClass(String name, Element parent)
