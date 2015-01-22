@@ -2,8 +2,15 @@ package edu.mayo.aml.tooling.adl2aml;
 
 import com.google.common.base.Preconditions;
 import com.nomagic.magicdraw.commandline.CommandLine;
+import com.nomagic.magicdraw.openapi.uml.PresentationElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
+import com.nomagic.magicdraw.uml.DiagramTypeConstants;
+import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import edu.mayo.aml.tooling.adl2aml.utils.AU;
+import edu.mayo.aml.tooling.auxiliary.ModelUtils;
 import org.apache.log4j.Logger;
 import org.openehr.jaxb.am.Archetype;
 import org.openehr.jaxb.am.ArchetypeOntology;
@@ -76,7 +83,8 @@ public class AMLWriter extends CommandLine
             if ((archetype.getDescription() != null) && (archetype.getDescription().getDetails().size() > 0))
                 AU.debug("Description: " + archetype.getDescription().getDetails().get(0).getPurpose());
 
-            storeTerms(archetype.getOntology());
+
+            addArchetype(archetype);
 
         }
 
@@ -85,7 +93,7 @@ public class AMLWriter extends CommandLine
                  " Failed=" + failed);
     }
 
-    public void storeTerms(ArchetypeOntology ontology)
+    public void addTerms(ArchetypeOntology ontology)
     {
         if (ontology.getTermBindings().isEmpty())
             return;
@@ -93,5 +101,11 @@ public class AMLWriter extends CommandLine
         for (TermBindingSet set : ontology.getTermBindings())
             for (TermBindingItem item : set.getItems())
                 amlProject.createConceptReference(item);
+    }
+
+    public void addArchetype(Archetype archetype)
+    {
+            addTerms(archetype.getOntology());
+            amlProject.createArchetype(archetype);
     }
 }

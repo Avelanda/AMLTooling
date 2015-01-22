@@ -1,5 +1,6 @@
 package edu.mayo.aml.tooling.adl2aml;
 
+import com.google.common.base.Preconditions;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import org.openehr.jaxb.am.Archetype;
 import org.openehr.jaxb.am.TermBindingItem;
@@ -26,6 +27,7 @@ public class AMLWriterHelper
         targetArchetypeIds.add("CIMI-CORE-ITEM_GROUP.author_action.v1.0.0");
         targetArchetypeIds.add("CIMI-CORE-ITEM_GROUP.issue_action.v1.0.0");
     }
+
     public boolean toProecess(Archetype archetype)
     {
         if (archetype == null)
@@ -35,5 +37,12 @@ public class AMLWriterHelper
             return true;
 
         return false;
+    }
+
+    public static String getAMLArchetypeNameFromADLArchetypeName(String adlName)
+    {
+        Preconditions.checkNotNull(adlName);
+
+        return (adlName.split("\\.[0-9]*\\.[0-9]*"))[0];
     }
 }

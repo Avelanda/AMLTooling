@@ -43,12 +43,40 @@ public class ModelUtils
 
     public static Package createPackage(String packageName, Element parent)
     {
+        return createPackage(packageName, parent, null, null, null);
+    }
+
+    public static Package createPackage(String packageName,
+                                        Element parent,
+                                        String profileName,
+                                        String streotypeName,
+                                        HashMap<String, Object> tagValues)
+    {
         Preconditions.checkNotNull(packageName);
+
+        Project project = Application.getInstance().getProject();
 
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
         Package np = ef.createPackageInstance();
         np.setName(packageName);
         np.setOwner(parent);
+
+        if ((profileName != null)&&(streotypeName != null))
+        {
+            Profile profile = StereotypesHelper.getProfile(project, profileName);
+            Stereotype stereotype = StereotypesHelper.getStereotype(project, streotypeName, profile);
+
+            // Apply Stereotype
+            if (StereotypesHelper.canApplyStereotype(np, stereotype))
+            {
+                StereotypesHelper.addStereotype(np, stereotype);
+
+                if ((tagValues != null) && (!tagValues.isEmpty()))
+                    for (String key : tagValues.keySet())
+                        StereotypesHelper.setStereotypePropertyValue(np,
+                                stereotype, key, tagValues.get(key));
+            }
+        }
 
         return np;
     }
