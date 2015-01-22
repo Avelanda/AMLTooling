@@ -14,3 +14,15 @@ To compile run following maven commands in AMLTooling Project:
 
 mvn clean install
 
+To run it in an IDE:
+
+1. Setup the heap size.
+2. include Cameo/MD installation directory and its plugins subdirectory.
+3. include the supplied log4j or use your own log4j logger.
+
+-Xmx1000M
+-XX:PermSize=4M
+-XX:MaxPermSize=135M
+-Dinstall.root="/Applications/Cameo Enterprise Architecture"
+-Dmd.plugins.dir="/Applications/Cameo Enterprise Architecture/plugins"
+-Dlog4j.configuration=log4j.properties
