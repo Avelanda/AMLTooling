@@ -6,12 +6,11 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
-import com.nomagic.magicdraw.ui.actions.PresentationElementConfigurator;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -20,8 +19,7 @@ import com.nomagic.uml2.impl.ElementsFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.HashMap;
 
 import static com.nomagic.magicdraw.openapi.uml.ModelElementsManager.getInstance;
 
@@ -107,19 +105,111 @@ public class ModelUtils
         }
     }
 
-    public static Class createClass(String name, Element parent)
+    public static Class createClass(String name,
+                                    Element parent)
+            throws ReadOnlyElementException
+    {
+        return createClass(name, parent, null, null, null);
+    }
+
+    public static Class createClass(String name,
+                                    Element parent,
+                                    String profileName,
+                                    String streotypeName,
+                                    HashMap<String, Object> tagValues)
             throws ReadOnlyElementException
     {
         Preconditions.checkNotNull(name);
 
-        ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+        Project project = Application.getInstance().getProject();
+        ElementsFactory ef = project.getElementsFactory();
         Class cls = ef.createClassInstance();
         cls.setName(name);
 
         if (parent != null)
             getInstance().addElement(cls, parent);
 
+        if ((profileName != null)&&(streotypeName != null))
+        {
+            Profile profile = StereotypesHelper.getProfile(project, profileName);
+            Stereotype stereotype = StereotypesHelper.getStereotype(project, streotypeName, profile);
+
+            // Apply Stereotype
+            if (StereotypesHelper.canApplyStereotype(cls, stereotype))
+            {
+                StereotypesHelper.addStereotype(cls, stereotype);
+
+                if ((tagValues != null) && (!tagValues.isEmpty()))
+                    for (String key : tagValues.keySet())
+                        StereotypesHelper.setStereotypePropertyValue(cls,
+                                stereotype, key, tagValues.get(key));
+            }
+        }
+
         return cls;
+    }
+
+    public static Enumeration createEnumeration(String name,
+                                                Element parent)
+            throws ReadOnlyElementException
+    {
+        return createEnumeration(name, parent, null, null, null);
+    }
+
+    public static Enumeration createEnumeration(String name,
+                                                Element parent,
+                                                String profileName,
+                                                String streotypeName,
+                                                HashMap<String, Object> tagValues)
+            throws ReadOnlyElementException
+    {
+        Preconditions.checkNotNull(name);
+
+        Project project = Application.getInstance().getProject();
+        ElementsFactory ef = project.getElementsFactory();
+        Enumeration enumInstance = ef.createEnumerationInstance();
+        enumInstance.setName(name);
+
+        if (parent != null)
+            getInstance().addElement(enumInstance, parent);
+
+        if ((profileName != null)&&(streotypeName != null))
+        {
+            Profile profile = StereotypesHelper.getProfile(project, profileName);
+            Stereotype stereotype = StereotypesHelper.getStereotype(project, streotypeName, profile);
+
+            // Apply Stereotype
+            if (StereotypesHelper.canApplyStereotype(enumInstance, stereotype))
+            {
+                StereotypesHelper.addStereotype(enumInstance, stereotype);
+
+                if ((tagValues != null) && (!tagValues.isEmpty()))
+                    for (String key : tagValues.keySet())
+                        StereotypesHelper.setStereotypePropertyValue(enumInstance,
+                                                      stereotype, key, tagValues.get(key));
+            }
+        }
+
+        return enumInstance;
+    }
+
+    public static EnumerationLiteral createEnumerationLiteral(String name,
+                                                Enumeration container)
+            throws ReadOnlyElementException
+    {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(container);
+
+        Project project = Application.getInstance().getProject();
+        ElementsFactory ef = project.getElementsFactory();
+        EnumerationLiteral enumLit = ef.createEnumerationLiteralInstance();
+        enumLit.setName(name);
+
+
+        if (container != null)
+            container.getOwnedLiteral().add(enumLit);
+
+        return enumLit;
     }
 
     public static Property createProperty(String name, Classifier type, VisibilityKind visibility, Element container)
