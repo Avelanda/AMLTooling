@@ -10,6 +10,7 @@ import com.nomagic.magicdraw.openapi.uml.PresentationElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
@@ -52,6 +53,11 @@ public class AMLMDProject extends MDProject
     public Enumeration snomedctIds = null;
     public Enumeration loincIds = null;
     public Enumeration otherIds = null;
+
+    public Element languages = null;
+
+    // commonly used
+    public EnumerationLiteral english = null;
 
     HashMap<String, Object> projectElements = new HashMap<String, Object>();
 
@@ -111,6 +117,11 @@ public class AMLMDProject extends MDProject
         snomedCTTermsPackage = ModelUtils.createPackage(AMLConstants.sctTermsPackageName, termsPackage);
         loincTermsPackage = ModelUtils.createPackage(AMLConstants.loincTermsPackageName, termsPackage);
         otherTermsPackage = ModelUtils.createPackage(AMLConstants.otherTermsPackageName, termsPackage);
+
+        languages = ModelHelper.findElementWithPath(mdProject, "CommonResources::Languages::Languages", Enumeration.class);
+        AU.info("Lanuages:" + UMLUtils.printUMLElements(((Enumeration) languages).getOwnedLiteral()));
+
+        english = getLanugageByName("en");
 
         HashMap<String, Object> tagValues = new HashMap<String, Object>();
 
@@ -340,5 +351,28 @@ public class AMLMDProject extends MDProject
                             return dict.getValue();
             }
         return key;
+    }
+
+    public EnumerationLiteral getEnglish()
+    {
+        if (english == null)
+            english = getLanugageByName("en");
+
+        return english;
+    }
+
+    public EnumerationLiteral getLanugageByName(String language)
+    {
+        if (languages == null)
+            return null;
+
+        if (languages instanceof Enumeration)
+        {
+            for (EnumerationLiteral el : ((Enumeration) languages).getOwnedLiteral())
+                if (el.getName().equalsIgnoreCase(language))
+                    return el;
+        }
+
+        return null;
     }
 }

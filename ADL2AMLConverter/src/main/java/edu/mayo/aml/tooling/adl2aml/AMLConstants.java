@@ -18,7 +18,10 @@ public class AMLConstants
                             {       "CommonResources.mdzip",
                                     "TerminologyProfile.mdzip",
                                     "ReferenceModelProfile.mdzip",
-                                    "ConstraintProfile.mdzip"
+                                    "ConstraintProfile.mdzip",
+                                    "ArchetypeProfile.mdzip",
+                                    "ArchetypeMetadataProfile.mdzip",
+                                    "CIMI RM v3.0.1.mdzip"
                             };
 
     // Profile Names

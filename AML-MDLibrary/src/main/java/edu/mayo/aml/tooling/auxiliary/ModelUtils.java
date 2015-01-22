@@ -40,6 +40,10 @@ public class ModelUtils
         return (Collection<Profile>) ModelHelper.getElementsOfType(project.getModel(), pc, false);
     }
 
+    public static Element findElementWithPath(Project project, String qualifiedName, java.lang.Class classifier)
+    {
+        return ModelHelper.findElementWithPath(project, qualifiedName, classifier);
+    }
 
     public static Package createPackage(String packageName, Element parent)
     {
