@@ -2,6 +2,7 @@ package edu.mayo.aml.tooling.adl2aml;
 
 import com.google.common.base.Preconditions;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import edu.mayo.aml.tooling.adl2aml.utils.AU;
 import org.openehr.jaxb.am.Archetype;
 import org.openehr.jaxb.am.TermBindingItem;
 
@@ -39,10 +40,17 @@ public class AMLWriterHelper
         return false;
     }
 
-    public static String getAMLArchetypeNameFromADLArchetypeName(String adlName)
+    public static String getArchetypeIdWithoutMinorVersion(Archetype archetype)
     {
-        Preconditions.checkNotNull(adlName);
+        Preconditions.checkNotNull(archetype);
+        return AMLWriterHelper.removeMinorVersion(archetype.getArchetypeId().getValue());
+    }
 
-        return (adlName.split("\\.[0-9]*\\.[0-9]*"))[0];
+    public static String removeMinorVersion(String str)
+    {
+        if (!AU.isNull(str))
+           return (str.split("\\.[0-9]*\\.[0-9]*"))[0];
+
+        return str;
     }
 }

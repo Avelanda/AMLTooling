@@ -43,7 +43,7 @@ public class AMLWriter extends CommandLine
         if ((applyFilter)&&(!helper.toProecess(archetype)))
             return;
 
-        archetypes.put(archetype.getArchetypeId().getValue(), archetype);
+        archetypes.put(AMLWriterHelper.getArchetypeIdWithoutMinorVersion(archetype), archetype);
     }
 
     @Override
@@ -54,6 +54,8 @@ public class AMLWriter extends CommandLine
         if (amlProject.getProject() == null)
             logger.error("Failed to initialize the base project - to start AML Conversion !! Exiting...");
 
+        amlProject.checkSession("<<<<<<<<<<<<   Starting transform...");
+
         amlProject.init();
         Preconditions.checkNotNull(amlProject.getRootPackages());
 
@@ -62,7 +64,9 @@ public class AMLWriter extends CommandLine
         // Save Project at the end of conversion
         amlProject.save();
 
+        // Closing the session
         amlProject.closeSession();
+        AU.debug("<<<<<<<<<<<<   Finished transform...");
         return 0;
     }
 }

@@ -1,29 +1,22 @@
 package edu.mayo.aml.tooling.adl2aml;
 
 import com.google.common.base.Preconditions;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
-import com.nomagic.magicdraw.core.project.ProjectsManager;
-import com.nomagic.magicdraw.openapi.uml.PresentationElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
-import com.nomagic.magicdraw.uml.DiagramTypeConstants;
-import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import edu.mayo.aml.tooling.adl2aml.utils.AU;
-import edu.mayo.aml.tooling.adl2aml.utils.UMLUtils;
 import edu.mayo.aml.tooling.auxiliary.ModelUtils;
 import edu.mayo.aml.tooling.auxiliary.ProjectUtils;
 import org.apache.log4j.Logger;
-import org.openehr.jaxb.am.*;
-import org.openehr.jaxb.rm.StringDictionaryItem;
+import org.openehr.jaxb.am.Archetype;
+import org.openehr.jaxb.am.CAttribute;
 
-import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by dks02 on 1/20/15.
@@ -64,7 +57,7 @@ public class AMLMDProject extends MDProject
 
     public void init()
     {
-        startSession("Initializing Project");
+        checkSession("Initializing Project");
         // Reinitialize project contents by deleteing any previously generated elements.
         ph.removeAllElements();
 
@@ -78,7 +71,6 @@ public class AMLMDProject extends MDProject
         // This will create folder and sub-folders for terminology/concept references
         // that are used for this set of archetypes.
         pt.initialize(rootPackage);
-        closeSession();
     }
 
 
@@ -104,9 +96,6 @@ public class AMLMDProject extends MDProject
         {
             try
             {
-                if ((archetype.getDescription() != null) && (archetype.getDescription().getDetails().size() > 0))
-                    AU.debug("Description: " + archetype.getDescription().getDetails().get(0).getPurpose());
-
                 addArchetype(archetype);
             }
             catch(Exception e)
@@ -123,21 +112,26 @@ public class AMLMDProject extends MDProject
 
     public Class addArchetype(Archetype archetype)
     {
-        Preconditions.checkNotNull(archetype);
+        if (archetype == null)
+            return null;
+
+        // Check if already processed or not
+        String currentArchId = AMLWriterHelper.getArchetypeIdWithoutMinorVersion(archetype);
+        Class archCls = processed.get(currentArchId);
+
+        if (archCls != null)
+        {
+            AU.debug("Archetype " + currentArchId + " Already processed!");
+            return archCls;
+        }
 
         AU.debug("####################### BEGIN #######################################");
         AU.debug("Archetype: " + archetype.getArchetypeId().getValue());
-
-        // Check if already processed or not
-        Class archCls = processed.get(archetype.getArchetypeId().getValue());
-
-        if (archCls != null)
-            return archCls;
+        if ((archetype.getDescription() != null) && (archetype.getDescription().getDetails().size() > 0))
+            AU.debug("Description: " + archetype.getDescription().getDetails().get(0).getPurpose());
 
         // create terminological elements referenced in the archetype
         pt.addTerms(archetype.getOntology());
-
-        startSession("Creating Archetype");
 
         try
         {
@@ -164,13 +158,25 @@ public class AMLMDProject extends MDProject
             List<CAttribute> attributes = archetype.getDefinition().getAttributes();
             ph.displayRelatedInformation(archDiag);
 
-            processed.put(archetype.getArchetypeId().getValue(), archCls);
+            processed.put(currentArchId, archCls);
+
+            String parentArchId = "";
 
             if (archetype.getParentArchetypeId() != null)
-            {
-                Class parent = addArchetype(adlArchetypes.get(archetype.getArchetypeId().getValue()));
+                parentArchId = AMLWriterHelper.removeMinorVersion(archetype.getParentArchetypeId().getValue());
 
-                // Add constraint here
+            if((!AU.isNull(parentArchId))&&
+               (!currentArchId.equals(parentArchId)))
+            {
+                Archetype parent = adlArchetypes.get(parentArchId);
+
+                if (parent == null)
+                    AU.debug("Archetype Parent " + parentArchId +" not found in given list of archetypes. Skipping...");
+                else
+                {
+                    AU.debug("Adding Parent:" + parentArchId);
+                    addArchetype(adlArchetypes.get(parentArchId));
+                }
             }
         }
         catch(ReadOnlyElementException roe)
@@ -179,8 +185,6 @@ public class AMLMDProject extends MDProject
         }
 
         AU.debug("######################## END ######################################");
-
-        closeSession();
 
         return archCls;
     }

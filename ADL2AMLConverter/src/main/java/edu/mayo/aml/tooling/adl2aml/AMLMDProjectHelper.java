@@ -44,6 +44,7 @@ public class AMLMDProjectHelper
 
     public Package getRootPackage(String name, boolean create)
     {
+        mdp.checkSession("Creating Root Package if needed...");
         Collection<Package> roots = ModelUtils.findPackageForMatchingName(mdp.getProject(), name);
 
         if (!roots.isEmpty())
@@ -57,12 +58,14 @@ public class AMLMDProjectHelper
     public void removeAllElements()
     {
         Preconditions.checkNotNull(mdp.getProject());
+        mdp.checkSession("Removing All Elements...");
         ModelUtils.removeAllPackages(mdp.getProject());
         ModelUtils.removeAllProfiles(mdp.getProject());
     }
 
     public void addUsedModules()
     {
+        mdp.checkSession("Adding Use Module...");
         ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
         try
         {
@@ -81,9 +84,9 @@ public class AMLMDProjectHelper
 
     public Package createArchetypePackage(Archetype archetype, Package parent)
     {
+        mdp.checkSession("Creating Archetype Package...");
         // Archetype creation Begin
-        String adlArchId = archetype.getArchetypeId().getValue();
-        String amlArchId = AMLWriterHelper.getAMLArchetypeNameFromADLArchetypeName(adlArchId);
+        String amlArchId = AMLWriterHelper.getArchetypeIdWithoutMinorVersion(archetype);
         AU.debug("Creating AML Archetype Package: " + amlArchId);
 
         return ModelUtils.createPackage(amlArchId,
@@ -96,17 +99,20 @@ public class AMLMDProjectHelper
     public Diagram createArchetypeDiagram(Package archPkg) throws ReadOnlyElementException
     {
         Preconditions.checkNotNull(archPkg);
+        mdp.checkSession("Creating Archetype Diagram...");
         return ModelUtils.createDiagram(archPkg.getName(), DiagramTypeConstants.UML_CLASS_DIAGRAM, archPkg);
     }
 
     public void addElementToDiagram(Element element, Diagram diagram) throws ReadOnlyElementException
     {
+        mdp.checkSession("Adding to the diagram...");
         DiagramPresentationElement pe = mdp.getProject().getDiagram(diagram);
         PresentationElementsManager.getInstance().createShapeElement(element, pe);
     }
 
     public void displayRelatedInformation(Diagram diagram) throws ReadOnlyElementException
     {
+        mdp.checkSession("Display Related Information...");
         Set linkTypes = new HashSet();
         linkTypes.add(new LinkType(Generalization.class));
         linkTypes.add(new LinkType(InterfaceRealization.class));

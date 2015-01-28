@@ -39,18 +39,14 @@ public abstract class MDProject
     public void save()
     {
         Preconditions.checkNotNull(getProject());
-        startSession("Saving Project");
+        checkSession("Saving Project");
         ProjectUtils.saveProject(mdProject);
-        closeSession();
     }
 
-    public void startSession(String task)
+    public void checkSession(String task)
     {
-        if (inSession)
-            closeSession();
-
-        SessionManager.getInstance().createSession(task);
-        inSession = true;
+        if (!SessionManager.getInstance().isSessionCreated())
+            SessionManager.getInstance().createSession(task);
     }
 
     public void closeSession()

@@ -62,7 +62,7 @@ public class AMLMDProjectTerms
 
     public void initialize(Package container)
     {
-        mdp.startSession("Initializing Terminology Packages...");
+        mdp.checkSession("Initializing Terminology Packages...");
 
         if (container == null)
             container = mdp.getProject().getModel();
@@ -128,7 +128,6 @@ public class AMLMDProjectTerms
         {
             e.printStackTrace();
         }
-        mdp.closeSession();
     }
 
     public void addTerms(ArchetypeOntology ontology)
@@ -164,7 +163,7 @@ public class AMLMDProjectTerms
             if (cr != null)
                 return cr;
 
-            mdp.startSession("Creating Concept Reference");
+            mdp.checkSession("Creating Concept Reference");
 
             Package termPkg = getPackageForTermID(ontId);
 
@@ -189,8 +188,6 @@ public class AMLMDProjectTerms
         {
             e1.printStackTrace();
         }
-
-        mdp.closeSession();
 
         return cls;
     }
