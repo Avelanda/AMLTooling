@@ -4,8 +4,9 @@ import com.google.common.base.Preconditions;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
+import com.nomagic.magicdraw.uml.DiagramTypeConstants;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import edu.mayo.aml.tooling.adl2aml.utils.AU;
 import edu.mayo.aml.tooling.auxiliary.ModelUtils;
@@ -26,6 +27,7 @@ public class AMLMDProject extends MDProject
     public Logger logger = Logger.getRootLogger();
 
     public Package rootPackage = null;
+    public Diagram rootPackageDiagram = null;
 
     private AMLMDProjectHelper ph = null;
     private AMLMDProjectTerms pt = null;
@@ -65,8 +67,15 @@ public class AMLMDProject extends MDProject
         ph.addUsedModules();
 
         rootPackage = ph.getRootPackage(AMLConstants.defaultRootPackageName, true);
-        //AU.info("Root Package:" + UMLUtils.printUMLNamedElement(rootPackage));
-
+        try
+        {
+            rootPackageDiagram = ModelUtils.createDiagram(AMLConstants.defaultRootPackageName,
+                                         DiagramTypeConstants.UML_PACKAGE_DIAGRAM,
+                                         rootPackage);
+        } catch (ReadOnlyElementException e)
+        {
+            e.printStackTrace();
+        }
         // Initialize Project Terminology Structure under the root package.
         // This will create folder and sub-folders for terminology/concept references
         // that are used for this set of archetypes.
@@ -130,54 +139,27 @@ public class AMLMDProject extends MDProject
         if ((archetype.getDescription() != null) && (archetype.getDescription().getDetails().size() > 0))
             AU.debug("Description: " + archetype.getDescription().getDetails().get(0).getPurpose());
 
-        // create terminological elements referenced in the archetype
-        pt.addTerms(archetype.getOntology());
-
         try
         {
             Package archPkg = ph.createArchetypePackage(archetype, rootPackage);
-            Diagram archDiag = ph.createArchetypeDiagram(archPkg);
+            ph.addElementToDiagram(archPkg, rootPackageDiagram);
 
+            Diagram archDiag = ph.createArchetypeDiagram(archPkg);
             ph.addElementToDiagram(archPkg, archDiag);
 
-            if (archetype.getDefinition() == null)
-                return archCls;
+            // create terminological elements referenced in the archetype
+            Enumeration localIdentifiers = pt.addLocalTerms(archetype.getOntology(), archPkg);
+            ph.addElementToDiagram(localIdentifiers, archDiag);
 
-            String archVersionName = ADLHelper.getTermDefinitionText(archetype,
-                                                archetype.getDefinition().getNodeId(),
-                                                archetype.getOriginalLanguage().getCodeString());
+            archCls = addAMLArchetypeClass(archetype, archPkg, archDiag, localIdentifiers);
 
-            archCls = ModelUtils.createClass(archVersionName,
-                                                    archPkg,
-                                                    AMLConstants.CONSTRAINT_PROFILE,
-                                                    AMLConstants.STEREOTYPE_ARCHETYPE_VERSION,
-                                                    null);
+            // Add constraints here
+            ph.convertComplexDefinition(archetype.getDefinition(), archCls);
 
-            ph.addElementToDiagram(archCls, archDiag);
-
-            List<CAttribute> attributes = archetype.getDefinition().getAttributes();
-            ph.displayRelatedInformation(archDiag);
-
+            // Add to the list of processed archetypes
             processed.put(currentArchId, archCls);
-
-            String parentArchId = "";
-
-            if (archetype.getParentArchetypeId() != null)
-                parentArchId = AMLWriterHelper.removeMinorVersion(archetype.getParentArchetypeId().getValue());
-
-            if((!AU.isNull(parentArchId))&&
-               (!currentArchId.equals(parentArchId)))
-            {
-                Archetype parent = adlArchetypes.get(parentArchId);
-
-                if (parent == null)
-                    AU.debug("Archetype Parent " + parentArchId +" not found in given list of archetypes. Skipping...");
-                else
-                {
-                    AU.debug("Adding Parent:" + parentArchId);
-                    addArchetype(adlArchetypes.get(parentArchId));
-                }
-            }
+            addParentArchetype(archetype, archCls, currentArchId, archDiag);
+            ph.displayRelatedInformation(archDiag);
         }
         catch(ReadOnlyElementException roe)
         {
@@ -187,5 +169,74 @@ public class AMLMDProject extends MDProject
         AU.debug("######################## END ######################################");
 
         return archCls;
+    }
+
+    private Class addAMLArchetypeClass(Archetype archetype,
+                                       Package archPackage,
+                                       Diagram diagram,
+                                       Enumeration localIds)
+            throws ReadOnlyElementException
+    {
+        if (archetype.getDefinition() == null)
+            return null;
+
+        String nodeId = archetype.getDefinition().getNodeId();
+        String archVersionName = ADLHelper.getTermDefinitionText(archetype,
+                nodeId,
+                archetype.getOriginalLanguage().getCodeString());
+
+        HashMap<String, Object> tagValues = new HashMap<String, Object>();
+        tagValues.put(AMLConstants.TAG_ID, ModelUtils.findEnumerationLiteralInEnumeration(localIds, nodeId));
+        tagValues.put(AMLConstants.TAG_LANGUAGE, pc.getThisOrEnglish(archetype.getOriginalLanguage().getCodeString()));
+        tagValues.put(AMLConstants.TAG_DESCRIPTION, AMLConstants.DEFAULT_DESCRIPTION);
+        tagValues.put(AMLConstants.TAG_SIGN, archVersionName);
+
+        Class archCls = ModelUtils.createClass(archVersionName,
+                archPackage,
+                AMLConstants.CONSTRAINT_PROFILE,
+                AMLConstants.STEREOTYPE_ARCHETYPE_VERSION,
+                tagValues);
+
+        if (archCls != null)
+            ph.addElementToDiagram(archCls, diagram);
+
+        return archCls;
+    }
+
+    private void addParentArchetype(Archetype archetype,
+                                    Class archClass,
+                                    String archId, Diagram diagram)
+            throws ReadOnlyElementException
+    {
+        // Find and add parent if there is one (using Specialization with "constrains" stereotype)
+        String parentArchId = "";
+        Class parentCls = null;
+        if (archetype.getParentArchetypeId() != null)
+            parentArchId = AMLWriterHelper.removeMinorVersion(archetype.getParentArchetypeId().getValue());
+
+        if(!AU.isNull(parentArchId))
+        {
+            if (!archId.equals(parentArchId))
+            {
+                Archetype parent = adlArchetypes.get(parentArchId);
+
+                if (parent == null)
+                    AU.debug("Archetype Parent " + parentArchId + " not found in given list of archetypes. Skipping...");
+                else
+                {
+                    AU.debug("Adding Parent:" + parentArchId);
+                    parentCls = addArchetype(adlArchetypes.get(parentArchId));
+                }
+            }
+            else
+                parentCls = archClass;
+        }
+
+        if (parentCls != null)
+        {
+            Generalization generalization = ModelUtils.createGeneralization(parentCls, archClass);
+            ModelUtils.findAndApplyStereotype(generalization, AMLConstants.CONSTRAINT_PROFILE, AMLConstants.STEREOTYPE_CONSTRAINS, null);
+            ph.addElementToDiagram(parentCls, diagram);
+        }
     }
 }

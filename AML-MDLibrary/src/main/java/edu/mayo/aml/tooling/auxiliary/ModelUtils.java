@@ -161,24 +161,33 @@ public class ModelUtils
         if (parent != null)
             getInstance().addElement(cls, parent);
 
-        if ((profileName != null)&&(streotypeName != null))
+        ModelUtils.findAndApplyStereotype(cls, profileName, streotypeName, tagValues);
+
+        return cls;
+    }
+
+    public static void findAndApplyStereotype(Element element,
+                                              String profileName,
+                                              String streotypeName,
+                                              HashMap<String, Object> tagValues)
+    {
+        Project project = Application.getInstance().getProject();
+        if ((profileName != null)&&(streotypeName != null)&&(element != null))
         {
             Profile profile = StereotypesHelper.getProfile(project, profileName);
             Stereotype stereotype = StereotypesHelper.getStereotype(project, streotypeName, profile);
 
             // Apply Stereotype
-            if (StereotypesHelper.canApplyStereotype(cls, stereotype))
+            if (StereotypesHelper.canApplyStereotype(element, stereotype))
             {
-                StereotypesHelper.addStereotype(cls, stereotype);
+                StereotypesHelper.addStereotype(element, stereotype);
 
                 if ((tagValues != null) && (!tagValues.isEmpty()))
                     for (String key : tagValues.keySet())
-                        StereotypesHelper.setStereotypePropertyValue(cls,
+                        StereotypesHelper.setStereotypePropertyValue(element,
                                 stereotype, key, tagValues.get(key));
             }
         }
-
-        return cls;
     }
 
     public static Enumeration createEnumeration(String name,
@@ -205,23 +214,7 @@ public class ModelUtils
         if (parent != null)
             getInstance().addElement(enumInstance, parent);
 
-        if ((profileName != null)&&(streotypeName != null))
-        {
-            Profile profile = StereotypesHelper.getProfile(project, profileName);
-            Stereotype stereotype = StereotypesHelper.getStereotype(project, streotypeName, profile);
-
-            // Apply Stereotype
-            if (StereotypesHelper.canApplyStereotype(enumInstance, stereotype))
-            {
-                StereotypesHelper.addStereotype(enumInstance, stereotype);
-
-                if ((tagValues != null) && (!tagValues.isEmpty()))
-                    for (String key : tagValues.keySet())
-                        StereotypesHelper.setStereotypePropertyValue(enumInstance,
-                                                      stereotype, key, tagValues.get(key));
-            }
-        }
-
+        ModelUtils.findAndApplyStereotype(enumInstance, profileName, streotypeName, tagValues);
         return enumInstance;
     }
 
@@ -237,11 +230,20 @@ public class ModelUtils
         EnumerationLiteral enumLit = ef.createEnumerationLiteralInstance();
         enumLit.setName(name);
 
-
         if (container != null)
             container.getOwnedLiteral().add(enumLit);
 
         return enumLit;
+    }
+
+    public static EnumerationLiteral findEnumerationLiteralInEnumeration(Enumeration container, String name)
+    {
+        if (container != null)
+            for (EnumerationLiteral member : container.getOwnedLiteral())
+                if (member.getName().equals(name))
+                    return member;
+
+        return null;
     }
 
     public static Property createProperty(String name, Classifier type, VisibilityKind visibility, Element container)

@@ -5,6 +5,7 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Enumeration;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
+import edu.mayo.aml.tooling.auxiliary.ModelUtils;
 
 /**
  * Created by dks02 on 1/27/15.
@@ -18,9 +19,9 @@ public class AMLMDProjectCommons
         this.mdp = mdProject;
     }
 
-    public Element getLanguages()
+    public Enumeration getLanguages()
     {
-        return ModelHelper.findElementWithPath(mdp.getProject(), "CommonResources::Languages::Languages", Enumeration.class);
+        return (Enumeration) ModelHelper.findElementWithPath(mdp.getProject(), "CommonResources::Languages::Languages", Enumeration.class);
     }
 
     public EnumerationLiteral getThisOrEnglish(String name)
@@ -35,19 +36,21 @@ public class AMLMDProjectCommons
 
     public EnumerationLiteral getLanugageByName(String languageCodeOrName)
     {
-        Element languages = getLanguages();
+        return ModelUtils.findEnumerationLiteralInEnumeration(getLanguages(), languageCodeOrName);
 
-        if (languages == null)
-            return null;
-
-        if (languages instanceof Enumeration)
-        {
-            for (EnumerationLiteral el : ((Enumeration) languages).getOwnedLiteral())
-                if (el.getName().equalsIgnoreCase(languageCodeOrName))
-                    return el;
-        }
-
-        return null;
+//        Element languages = getLanguages();
+//
+//        if (languages == null)
+//            return null;
+//
+//        if (languages instanceof Enumeration)
+//        {
+//            for (EnumerationLiteral el : ((Enumeration) languages).getOwnedLiteral())
+//                if (el.getName().equalsIgnoreCase(languageCodeOrName))
+//                    return el;
+//        }
+//
+//        return null;
     }
 
     private EnumerationLiteral getEnglishLanguage()

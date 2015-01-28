@@ -130,19 +130,30 @@ public class AMLMDProjectTerms
         }
     }
 
-    public void addTerms(ArchetypeOntology ontology)
+    public Enumeration addLocalTerms(ArchetypeOntology ontology,
+                                     Package container)
+                      throws ReadOnlyElementException
     {
         Preconditions.checkNotNull(ontology);
 
         if (getTermsPackage() == null)
-            return;
+            return null;
 
-        if (ontology.getTermBindings().isEmpty())
-            return;
+        if (!ontology.getTermBindings().isEmpty())
+            for (TermBindingSet set : ontology.getTermBindings())
+                for (TermBindingItem item : set.getItems())
+                    createConceptReference(item);
 
-        for (TermBindingSet set : ontology.getTermBindings())
-            for (TermBindingItem item : set.getItems())
-                createConceptReference(item);
+        Enumeration ids = ModelUtils.createEnumeration(AMLConstants.localScopedIdentifiersEnumerationName,
+                                                container,
+                                                AMLConstants.TERMINOLOGY_PROFILE,
+                                                AMLConstants.STEREOTYPE_SCOPEDIDENTIFIER,
+                                                null);
+
+        for (String id : ADLHelper.getTermDefinitionIds(ontology, null))
+            ModelUtils.createEnumerationLiteral(id, ids);
+
+        return ids;
     }
 
     private Class createConceptReference(TermBindingItem item)

@@ -13,11 +13,13 @@ import com.nomagic.magicdraw.uml.symbols.*;
 import com.nomagic.magicdraw.uml.symbols.paths.ContainmentLinkView;
 import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.InterfaceRealization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import edu.mayo.aml.tooling.adl2aml.utils.AU;
 import edu.mayo.aml.tooling.auxiliary.ModelUtils;
 import org.apache.log4j.Logger;
 import org.openehr.jaxb.am.Archetype;
+import org.openehr.jaxb.am.CComplexObject;
 
 import java.io.File;
 import java.util.Collection;
@@ -116,7 +118,7 @@ public class AMLMDProjectHelper
         Set linkTypes = new HashSet();
         linkTypes.add(new LinkType(Generalization.class));
         linkTypes.add(new LinkType(InterfaceRealization.class));
-        linkTypes.add(new LinkType(Association.class));
+        //linkTypes.add(new LinkType(Association.class));
 
         DisplayRelatedSymbolsInfo info = new DisplayRelatedSymbolsInfo(linkTypes);
         info.setDepthLimited(true);
@@ -125,5 +127,10 @@ public class AMLMDProjectHelper
 
         PresentationElement view = mdp.getProject().getDiagram(diagram);
         DisplayRelatedSymbols.displayRelatedSymbols(view, info);
+    }
+
+    public void convertComplexDefinition(CComplexObject complexConstraint, Class parent)
+    {
+
     }
 }
