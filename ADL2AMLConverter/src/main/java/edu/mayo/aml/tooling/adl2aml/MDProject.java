@@ -1,5 +1,6 @@
 package edu.mayo.aml.tooling.adl2aml;
 
+import com.google.common.base.Preconditions;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
@@ -15,11 +16,33 @@ import java.util.Collection;
  */
 public abstract class MDProject
 {
+    protected Project mdProject = null;
     protected boolean inSession = false;
 
-    public abstract Collection<Package> getRootPackages();
-    public abstract Project getProject();
-    public abstract void save();
+    public Collection<Package> getRootPackages()
+    {
+        Preconditions.checkNotNull(getProject());
+        Collection<Package> nested = getProject().getModel().getNestedPackage();
+        return nested;
+    }
+
+    public Project getProject()
+    {
+        return mdProject;
+    }
+
+    public void setProject(Project project)
+    {
+        this.mdProject = project;
+    }
+
+    public void save()
+    {
+        Preconditions.checkNotNull(getProject());
+        startSession("Saving Project");
+        ProjectUtils.saveProject(mdProject);
+        closeSession();
+    }
 
     public void startSession(String task)
     {

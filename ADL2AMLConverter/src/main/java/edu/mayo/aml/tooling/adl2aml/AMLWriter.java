@@ -33,11 +33,14 @@ public class AMLWriter extends CommandLine
     private AMLMDProject amlProject = null;
     private AMLWriterHelper helper = new AMLWriterHelper();
 
-    boolean toFiler = true;
+    public boolean applyFilter = true;
 
     public void queue(Archetype archetype)
     {
         if ((archetype == null)||(archetype.getArchetypeId() == null))
+            return;
+
+        if ((applyFilter)&&(!helper.toProecess(archetype)))
             return;
 
         archetypes.put(archetype.getArchetypeId().getValue(), archetype);
@@ -54,58 +57,12 @@ public class AMLWriter extends CommandLine
         amlProject.init();
         Preconditions.checkNotNull(amlProject.getRootPackages());
 
-        this.convert();
+        amlProject.loadADLArchetypes(archetypes);
 
         // Save Project at the end of conversion
         amlProject.save();
 
         amlProject.closeSession();
         return 0;
-    }
-
-    public void convert()
-    {
-        Preconditions.checkState(!archetypes.isEmpty());
-
-        int total = archetypes.size();
-        int failed = 0;
-        List<String> failedFiles = new ArrayList<String>();
-
-        AU.info("Converting " + archetypes.size() + " archetypes...");
-        for (Archetype archetype : archetypes.values())
-        {
-            if (toFiler && (!helper.toProecess(archetype)))
-                continue;
-
-            AU.debug("##############################################################");
-            AU.debug("Archetype: " + archetype.getArchetypeId().getValue());
-
-            if ((archetype.getDescription() != null) && (archetype.getDescription().getDetails().size() > 0))
-                AU.debug("Description: " + archetype.getDescription().getDetails().get(0).getPurpose());
-
-
-            addArchetype(archetype);
-
-        }
-
-        AU.debug(" Total=" + total +
-                 " Success=" + (total - failed) +
-                 " Failed=" + failed);
-    }
-
-    public void addTerms(ArchetypeOntology ontology)
-    {
-        if (ontology.getTermBindings().isEmpty())
-            return;
-
-        for (TermBindingSet set : ontology.getTermBindings())
-            for (TermBindingItem item : set.getItems())
-                amlProject.createConceptReference(item);
-    }
-
-    public void addArchetype(Archetype archetype)
-    {
-            addTerms(archetype.getOntology());
-            amlProject.createArchetype(archetype);
     }
 }

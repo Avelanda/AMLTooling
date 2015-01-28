@@ -19,16 +19,11 @@ import edu.mayo.aml.tooling.adl2aml.utils.UMLUtils;
 import edu.mayo.aml.tooling.auxiliary.ModelUtils;
 import edu.mayo.aml.tooling.auxiliary.ProjectUtils;
 import org.apache.log4j.Logger;
-import org.openehr.jaxb.am.Archetype;
-import org.openehr.jaxb.am.ArchetypeTerm;
-import org.openehr.jaxb.am.CodeDefinitionSet;
-import org.openehr.jaxb.am.TermBindingItem;
+import org.openehr.jaxb.am.*;
 import org.openehr.jaxb.rm.StringDictionaryItem;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by dks02 on 1/20/15.
@@ -37,342 +32,156 @@ public class AMLMDProject extends MDProject
 {
     public Logger logger = Logger.getRootLogger();
 
-    private Project mdProject = null;
-
     public Package rootPackage = null;
-    public Package termsPackage = null;
 
-    public Package snomedCTTermsPackage = null;
-    public Package loincTermsPackage = null;
-    public Package otherTermsPackage = null;
+    private AMLMDProjectHelper ph = null;
+    private AMLMDProjectTerms pt = null;
+    private AMLMDProjectCommons pc = null;
 
-    public Diagram snomedctTermsDiag = null;
-    public Diagram loincTermsDiag = null;
-    public Diagram otherTermsDiag = null;
-
-    public Enumeration snomedctIds = null;
-    public Enumeration loincIds = null;
-    public Enumeration otherIds = null;
-
-    public Element languages = null;
-
-    // commonly used
-    public EnumerationLiteral english = null;
-
-    HashMap<String, Object> projectElements = new HashMap<String, Object>();
+    private HashMap<String, Archetype> adlArchetypes = new HashMap<String, Archetype>();
+    private HashMap<String, Class> processed = new HashMap<String, Class>();
 
     public AMLMDProject()
     {
-        mdProject = ProjectUtils.getProjectAtLocation(AMLConstants.projectLocation);
-
-        if (mdProject == null)
+        if (getProject() == null)
         {
+            Project proj = ProjectUtils.getProjectAtLocation(AMLConstants.projectLocation);
+            if (proj == null)
+            {
+                proj = ProjectUtils.createProject();
+                ProjectUtils.setActiveProject(proj);
+                ProjectDescriptorsFactory.createLocalProjectDescriptor(proj, ProjectUtils.getDefaultProjectFile());
+                save();
+            }
 
-            mdProject = ProjectUtils.createProject();
-            ProjectUtils.setActiveProject(mdProject);
-            ProjectDescriptorsFactory.createLocalProjectDescriptor(mdProject, ProjectUtils.getDefaultProjectFile());
-            save();
+            setProject(proj);
         }
-    }
 
-    public String getDefaultRootPackageName()
-    {
-        return AMLConstants.defaultRootPackageName;
-    }
-
-    public String getDefaultTermsPackageName()
-    {
-        return AMLConstants.defaultTermsPackageName;
+        ph = new AMLMDProjectHelper(this);
+        pt = new AMLMDProjectTerms(this);
+        pc = new AMLMDProjectCommons(this);
     }
 
     public void init()
     {
         startSession("Initializing Project");
-        removeAllElements();
-        ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
-        try
+        // Reinitialize project contents by deleteing any previously generated elements.
+        ph.removeAllElements();
+
+        // Import "Use Module" elements
+        ph.addUsedModules();
+
+        rootPackage = ph.getRootPackage(AMLConstants.defaultRootPackageName, true);
+        //AU.info("Root Package:" + UMLUtils.printUMLNamedElement(rootPackage));
+
+        // Initialize Project Terminology Structure under the root package.
+        // This will create folder and sub-folders for terminology/concept references
+        // that are used for this set of archetypes.
+        pt.initialize(rootPackage);
+        closeSession();
+    }
+
+
+    public void loadADLArchetypes(HashMap<String, Archetype> archetypes)
+    {
+        Preconditions.checkNotNull(archetypes);
+
+        this.adlArchetypes = archetypes;
+
+        if (archetypes.isEmpty())
         {
-            for (String imp : AMLConstants.imports)
+            AU.warn("No Archetype found for loading into AML Project!! Exiting...");
+            return;
+        }
+
+        int total = archetypes.size();
+        int failed = 0;
+        List<String> failedFiles = new ArrayList<String>();
+
+        AU.info("Converting " + archetypes.size() + " archetypes...");
+
+        for (Archetype archetype : archetypes.values())
+        {
+            try
             {
-                File file = new File(imp);
-                ProjectDescriptor des = ProjectDescriptorsFactory.createProjectDescriptor(file.toURI());
-                projectsManager.useModule(mdProject, des);
+                if ((archetype.getDescription() != null) && (archetype.getDescription().getDetails().size() > 0))
+                    AU.debug("Description: " + archetype.getDescription().getDetails().get(0).getPurpose());
+
+                addArchetype(archetype);
+            }
+            catch(Exception e)
+            {
+                e.printStackTrace();
+                failed++;
             }
         }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-        }
 
-        Collection<Package> roots = ModelUtils.findPackageForMatchingName(getProject(), getDefaultRootPackageName());
-
-        if (roots.isEmpty())
-            rootPackage = ModelUtils.createPackage(getDefaultRootPackageName(), getProject().getModel());
-        else
-            rootPackage = roots.iterator().next();
-
-        AU.info("Root Package:" + UMLUtils.printUMLNamedElement(rootPackage));
-
-        termsPackage = ModelUtils.createPackage(getDefaultTermsPackageName(), rootPackage);
-        snomedCTTermsPackage = ModelUtils.createPackage(AMLConstants.sctTermsPackageName, termsPackage);
-        loincTermsPackage = ModelUtils.createPackage(AMLConstants.loincTermsPackageName, termsPackage);
-        otherTermsPackage = ModelUtils.createPackage(AMLConstants.otherTermsPackageName, termsPackage);
-
-        languages = ModelHelper.findElementWithPath(mdProject, "CommonResources::Languages::Languages", Enumeration.class);
-        AU.info("Lanuages:" + UMLUtils.printUMLElements(((Enumeration) languages).getOwnedLiteral()));
-
-        english = getLanugageByName("en");
-
-        HashMap<String, Object> tagValues = new HashMap<String, Object>();
-
-        try
-        {
-            snomedctTermsDiag = ModelUtils.createDiagram(AMLConstants.sctTermsPackageName,
-                                           DiagramTypeConstants.UML_CLASS_DIAGRAM,
-                                           snomedCTTermsPackage);
-
-            tagValues.put(AMLConstants.TAG_ID_URI_PATTERN, "snomed-uri-pattern");
-            tagValues.put(AMLConstants.TAG_URI, "http://snomed.org");
-
-            snomedctIds = ModelUtils.createEnumeration(AMLConstants.sctTermsPackageName +"-ID",
-                    snomedCTTermsPackage,
-                    AMLConstants.TERMINOLOGY_PROFILE,
-                    AMLConstants.TAG_SCOPED_IDENTIFIER,
-                    tagValues);
-
-            DiagramPresentationElement sctdpe = mdProject.getDiagram(snomedctTermsDiag);
-            PresentationElementsManager.getInstance().createShapeElement(snomedctIds, sctdpe);
-
-            loincTermsDiag = ModelUtils.createDiagram(AMLConstants.loincTermsPackageName,
-                                            DiagramTypeConstants.UML_CLASS_DIAGRAM,
-                                            loincTermsPackage);
-
-            tagValues.put(AMLConstants.TAG_ID_URI_PATTERN, "loinc-uri-pattern");
-            tagValues.put(AMLConstants.TAG_URI, "http://loinc.org");
-
-            loincIds = ModelUtils.createEnumeration(AMLConstants.loincTermsPackageName +"-ID",
-                    loincTermsPackage,
-                    AMLConstants.TERMINOLOGY_PROFILE,
-                    AMLConstants.TAG_SCOPED_IDENTIFIER,
-                    tagValues);
-
-            DiagramPresentationElement loincdpe = mdProject.getDiagram(loincTermsDiag);
-            PresentationElementsManager.getInstance().createShapeElement(loincIds, loincdpe);
-
-            otherTermsDiag = ModelUtils.createDiagram(AMLConstants.otherTermsPackageName,
-                                            DiagramTypeConstants.UML_CLASS_DIAGRAM,
-                                            otherTermsPackage);
-
-            tagValues.put(AMLConstants.TAG_ID_URI_PATTERN, "other-uri-pattern");
-            tagValues.put(AMLConstants.TAG_URI, "http://other.org");
-
-            otherIds = ModelUtils.createEnumeration(AMLConstants.otherTermsPackageName +"-ID",
-                    otherTermsPackage,
-                    AMLConstants.TERMINOLOGY_PROFILE,
-                    AMLConstants.TAG_SCOPED_IDENTIFIER,
-                    tagValues);
-
-            DiagramPresentationElement othdpe = mdProject.getDiagram(otherTermsDiag);
-            PresentationElementsManager.getInstance().createShapeElement(otherIds, othdpe);
-        }
-        catch (ReadOnlyElementException e)
-        {
-            e.printStackTrace();
-        }
-
-        closeSession();
+        AU.debug(" Total=" + total +
+                " Success=" + (total - failed) +
+                " Failed=" + failed);
     }
 
-    public void save()
+    public Class addArchetype(Archetype archetype)
     {
-        Preconditions.checkNotNull(getProject());
-        startSession("Saving");
-        ProjectUtils.saveProject(mdProject);
-        closeSession();
-    }
+        Preconditions.checkNotNull(archetype);
 
-    public Collection<Package> getRootPackages()
-    {
-        Preconditions.checkNotNull(getProject());
-        Collection<Package> nested = getProject().getModel().getNestedPackage();
+        AU.debug("####################### BEGIN #######################################");
+        AU.debug("Archetype: " + archetype.getArchetypeId().getValue());
 
-        return nested;
-    }
+        // Check if already processed or not
+        Class archCls = processed.get(archetype.getArchetypeId().getValue());
 
-    public Project getProject()
-    {
-        return mdProject;
-    }
+        if (archCls != null)
+            return archCls;
 
-    public void removeAllElements()
-    {
-        Preconditions.checkNotNull(getProject());
-        ModelUtils.removeAllPackages(getProject());
-        ModelUtils.removeAllProfiles(getProject());
-    }
+        // create terminological elements referenced in the archetype
+        pt.addTerms(archetype.getOntology());
 
-    private Package getPackageForTermID(String id)
-    {
-        Preconditions.checkNotNull(id);
-        if (id.toLowerCase().indexOf("snomed") != -1)
-            return snomedCTTermsPackage;
-
-        if (id.toLowerCase().indexOf("loinc") != -1)
-            return loincTermsPackage;
-
-        return otherTermsPackage;
-    }
-
-    private Enumeration getEnumerationContainerForTermID(String id)
-    {
-        Preconditions.checkNotNull(id);
-        if (id.toLowerCase().indexOf("snomed") != -1)
-            return snomedctIds;
-
-        if (id.toLowerCase().indexOf("loinc") != -1)
-            return loincIds;
-
-        return otherIds;
-    }
-
-    private Diagram getDiagramForTermID(String id)
-    {
-        Preconditions.checkNotNull(id);
-        if (id.toLowerCase().indexOf("snomed") != -1)
-            return snomedctTermsDiag;
-
-        if (id.toLowerCase().indexOf("loinc") != -1)
-            return loincTermsDiag;
-
-        return otherTermsDiag;
-    }
-
-    public void createArchetype(Archetype archetype)
-    {
         startSession("Creating Archetype");
+
         try
         {
-            // Archetype creation Begin
-            String adlArchId = archetype.getArchetypeId().getValue();
-            String amlArchId = AMLWriterHelper.getAMLArchetypeNameFromADLArchetypeName(adlArchId);
-            AU.debug("Creating AML Archetype : " + amlArchId);
+            Package archPkg = ph.createArchetypePackage(archetype, rootPackage);
+            Diagram archDiag = ph.createArchetypeDiagram(archPkg);
 
-            Package archPkg = ModelUtils.createPackage(amlArchId,
-                                                       rootPackage,
-                                                       AMLConstants.CONSTRAINT_PROFILE,
-                                                       AMLConstants.STEREOTYPE_ARCHETYPE,
-                                                       null);
+            ph.addElementToDiagram(archPkg, archDiag);
 
-            Diagram archDiag = ModelUtils.createDiagram(amlArchId, DiagramTypeConstants.UML_CLASS_DIAGRAM, archPkg);
-            DiagramPresentationElement pe = getProject().getDiagram(archDiag);
-            PresentationElementsManager.getInstance().createShapeElement(archPkg, pe);
+            if (archetype.getDefinition() == null)
+                return archCls;
 
-            String archNameKey = archetype.getDefinition().getNodeId();
-            String archVersionName = getTermDefinitionText(archetype.getOntology().getTermDefinitions(), archNameKey);
+            String archVersionName = ADLHelper.getTermDefinitionText(archetype,
+                                                archetype.getDefinition().getNodeId(),
+                                                archetype.getOriginalLanguage().getCodeString());
 
-            Class archCls = ModelUtils.createClass(archVersionName,
+            archCls = ModelUtils.createClass(archVersionName,
                                                     archPkg,
                                                     AMLConstants.CONSTRAINT_PROFILE,
                                                     AMLConstants.STEREOTYPE_ARCHETYPE_VERSION,
                                                     null);
-            PresentationElementsManager.getInstance().createShapeElement(archCls, pe);
 
+            ph.addElementToDiagram(archCls, archDiag);
+
+            List<CAttribute> attributes = archetype.getDefinition().getAttributes();
+            ph.displayRelatedInformation(archDiag);
+
+            processed.put(archetype.getArchetypeId().getValue(), archCls);
+
+            if (archetype.getParentArchetypeId() != null)
+            {
+                Class parent = addArchetype(adlArchetypes.get(archetype.getArchetypeId().getValue()));
+
+                // Add constraint here
+            }
         }
         catch(ReadOnlyElementException roe)
         {
             roe.printStackTrace();
         }
 
+        AU.debug("######################## END ######################################");
+
         closeSession();
-    }
 
-    public Class createConceptReference(TermBindingItem item)
-    {
-        Class cls = null;
-        try
-        {
-
-            String ontId = item.getValue().getTerminologyId().getValue();
-            String code = item.getValue().getCodeString();
-
-            // if code has any non-alphanumeric
-            if (code.matches("^.*[^a-zA-Z0-9 ].*$"))
-                return null;
-
-            String termId = ontId + code;
-
-            Object obj = projectElements.get(termId);
-
-            if ((obj != null)&&(obj instanceof Class))
-                return ((Class)cls);
-
-            startSession("Create Concept Reference");
-
-            Package termPkg = getPackageForTermID(termId);
-
-            HashMap<String, Object> tagValues = new HashMap<String, Object>();
-            tagValues.put(AMLConstants.TAG_ID, code);
-            tagValues.put(AMLConstants.TAG_URI, termId);
-
-            cls = ModelUtils.createClass(code, termPkg,
-                                        AMLConstants.TERMINOLOGY_PROFILE,
-                                        AMLConstants.STEREOTYPE_CONCEPT_REFERENCE,
-                                        tagValues);
-
-            projectElements.put(termId, cls);
-
-            Diagram termDiag = getDiagramForTermID(termId);
-            DiagramPresentationElement cdpe = mdProject.getDiagram(termDiag);
-            PresentationElementsManager.getInstance().createShapeElement(cls, cdpe);
-
-            ModelUtils.createEnumerationLiteral(code, getEnumerationContainerForTermID(termId));
-
-            closeSession();
-        }
-        catch (ReadOnlyElementException e1)
-        {
-            e1.printStackTrace();
-        }
-
-        return cls;
-    }
-
-    public String getTermDefinitionText(List<CodeDefinitionSet> termDefinitions, String key)
-    {
-        Preconditions.checkNotNull(termDefinitions);
-        Preconditions.checkNotNull(key);
-
-        for (CodeDefinitionSet cds : termDefinitions)
-            for (ArchetypeTerm term : cds.getItems())
-            {
-                if (term.getCode().equals(key))
-                    for (StringDictionaryItem dict : term.getItems())
-                        if (dict.getId().equalsIgnoreCase(AMLConstants.ATTRIBUTE_TEXT))
-                            return dict.getValue();
-            }
-        return key;
-    }
-
-    public EnumerationLiteral getEnglish()
-    {
-        if (english == null)
-            english = getLanugageByName("en");
-
-        return english;
-    }
-
-    public EnumerationLiteral getLanugageByName(String language)
-    {
-        if (languages == null)
-            return null;
-
-        if (languages instanceof Enumeration)
-        {
-            for (EnumerationLiteral el : ((Enumeration) languages).getOwnedLiteral())
-                if (el.getName().equalsIgnoreCase(language))
-                    return el;
-        }
-
-        return null;
+        return archCls;
     }
 }
