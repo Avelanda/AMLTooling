@@ -54,7 +54,7 @@ public class AMLWriter extends CommandLine
         if (amlProject.getProject() == null)
             logger.error("Failed to initialize the base project - to start AML Conversion !! Exiting...");
 
-        amlProject.checkSession("<<<<<<<<<<<<   Starting transform...");
+       AU.debug("<<<<<<<<<<<<   Starting transform...");
 
         amlProject.init();
         Preconditions.checkNotNull(amlProject.getRootPackages());
