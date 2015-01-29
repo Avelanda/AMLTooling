@@ -57,4 +57,7 @@ public abstract class MDProject
         SessionManager.getInstance().closeSession();
         inSession = false;
     }
+
+    public abstract Package getArchetypeLibraryPackage();
+    public abstract Package getReferenceModelPackage();
 }

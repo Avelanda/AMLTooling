@@ -11,15 +11,13 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Enumeration;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 
 import static com.nomagic.magicdraw.openapi.uml.ModelElementsManager.getInstance;
 
@@ -45,6 +43,24 @@ public class ModelUtils
         return ModelHelper.findElementWithPath(project, qualifiedName, classifier);
     }
 
+    public static Class findClassWithName(Package pkg, String className)
+    {
+        Preconditions.checkNotNull(pkg);
+        Preconditions.checkNotNull(className);
+        java.lang.Class[] ec = {Class.class};
+
+        Collection<Class> allClasses = (Collection<Class> ) ModelHelper.getElementsOfType(pkg, ec, false);
+
+        for (Class cls : allClasses)
+        {
+            String[] tokens = cls.getQualifiedName().split("::");
+            if (className.equals(tokens[tokens.length - 1]))
+                return cls;
+        }
+
+        return null;
+    }
+
     public static Package createPackage(String packageName, Element parent)
     {
         return createPackage(packageName, parent, null, null, null);
@@ -65,24 +81,30 @@ public class ModelUtils
         np.setName(packageName);
         np.setOwner(parent);
 
-        if ((profileName != null)&&(streotypeName != null))
-        {
-            Profile profile = StereotypesHelper.getProfile(project, profileName);
-            Stereotype stereotype = StereotypesHelper.getStereotype(project, streotypeName, profile);
-
-            // Apply Stereotype
-            if (StereotypesHelper.canApplyStereotype(np, stereotype))
-            {
-                StereotypesHelper.addStereotype(np, stereotype);
-
-                if ((tagValues != null) && (!tagValues.isEmpty()))
-                    for (String key : tagValues.keySet())
-                        StereotypesHelper.setStereotypePropertyValue(np,
-                                stereotype, key, tagValues.get(key));
-            }
-        }
-
+        ModelUtils.findAndApplyStereotype(np, profileName, streotypeName, tagValues);
         return np;
+    }
+
+    public static PackageImport addPackageImport(Package mainPackage,
+                                                    Package importedPackage,
+                                                    String profileName,
+                                                    String stereotypeName,
+                                                    HashMap<String, Object> tagValues)
+    {
+        Preconditions.checkNotNull(mainPackage);
+        Preconditions.checkNotNull(importedPackage);
+
+        Project project = Application.getInstance().getProject();
+
+        ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+        PackageImport pi = ef.createPackageImportInstance();
+        pi.setImportedPackage(importedPackage);
+
+        ModelUtils.findAndApplyStereotype(pi, profileName, stereotypeName, tagValues);
+
+        mainPackage.getPackageImport().add(pi);
+
+        return pi;
     }
 
     public static Collection<Package> findPackageForMatchingName(Project project, String nameRegex)
@@ -147,7 +169,7 @@ public class ModelUtils
     public static Class createClass(String name,
                                     Element parent,
                                     String profileName,
-                                    String streotypeName,
+                                    String stereotypeName,
                                     HashMap<String, Object> tagValues)
             throws ReadOnlyElementException
     {
@@ -161,21 +183,21 @@ public class ModelUtils
         if (parent != null)
             getInstance().addElement(cls, parent);
 
-        ModelUtils.findAndApplyStereotype(cls, profileName, streotypeName, tagValues);
+        ModelUtils.findAndApplyStereotype(cls, profileName, stereotypeName, tagValues);
 
         return cls;
     }
 
     public static void findAndApplyStereotype(Element element,
                                               String profileName,
-                                              String streotypeName,
+                                              String stereotypeName,
                                               HashMap<String, Object> tagValues)
     {
         Project project = Application.getInstance().getProject();
-        if ((profileName != null)&&(streotypeName != null)&&(element != null))
+        if ((profileName != null)&&(stereotypeName != null)&&(element != null))
         {
             Profile profile = StereotypesHelper.getProfile(project, profileName);
-            Stereotype stereotype = StereotypesHelper.getStereotype(project, streotypeName, profile);
+            Stereotype stereotype = StereotypesHelper.getStereotype(project, stereotypeName, profile);
 
             // Apply Stereotype
             if (StereotypesHelper.canApplyStereotype(element, stereotype))
@@ -200,7 +222,7 @@ public class ModelUtils
     public static Enumeration createEnumeration(String name,
                                                 Element parent,
                                                 String profileName,
-                                                String streotypeName,
+                                                String stereotypeName,
                                                 HashMap<String, Object> tagValues)
             throws ReadOnlyElementException
     {
@@ -214,7 +236,7 @@ public class ModelUtils
         if (parent != null)
             getInstance().addElement(enumInstance, parent);
 
-        ModelUtils.findAndApplyStereotype(enumInstance, profileName, streotypeName, tagValues);
+        ModelUtils.findAndApplyStereotype(enumInstance, profileName, stereotypeName, tagValues);
         return enumInstance;
     }
 

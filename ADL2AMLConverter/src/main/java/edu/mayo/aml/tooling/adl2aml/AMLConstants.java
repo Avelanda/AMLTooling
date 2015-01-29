@@ -6,7 +6,9 @@ package edu.mayo.aml.tooling.adl2aml;
 public class AMLConstants
 {
     public static String projectLocation = "AMLBaseProject.mdzip";
-    public static String defaultRootPackageName = "AML";
+
+    public static String rootPackageName = "AML";
+    public static String referenceModelPackageName = "CIMI Reference Model";
 
     public static String defaultTermsPackageName = "Terms";
     public static String sctTermsPackageName = "SNOMED-CT";
@@ -33,6 +35,8 @@ public class AMLConstants
     public static String CONSTRAINT_PROFILE = "ConstraintProfile";
 
     // Stereotypes
+    public static String STEREOTYPE_ARCHETYPE_LIBRARY = "ArchetypeLibrary";
+    public static String STEREOTYPE_REFERENCE_MODEL = "ReferenceModel";
     public static String STEREOTYPE_ARCHETYPE = "Archetype";
     public static String STEREOTYPE_ARCHETYPE_VERSION = "ArchetypeVersion";
     public static String STEREOTYPE_CONCEPT_REFERENCE = "ConceptReference";

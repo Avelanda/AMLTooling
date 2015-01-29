@@ -13,7 +13,6 @@ import edu.mayo.aml.tooling.auxiliary.ModelUtils;
 import edu.mayo.aml.tooling.auxiliary.ProjectUtils;
 import org.apache.log4j.Logger;
 import org.openehr.jaxb.am.Archetype;
-import org.openehr.jaxb.am.CAttribute;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +26,7 @@ public class AMLMDProject extends MDProject
     public Logger logger = Logger.getRootLogger();
 
     public Package rootPackage = null;
+    public Package rmPackage = null;
     public Diagram rootPackageDiagram = null;
 
     private AMLMDProjectHelper ph = null;
@@ -57,6 +57,16 @@ public class AMLMDProject extends MDProject
         pc = new AMLMDProjectCommons(this);
     }
 
+    public Package getArchetypeLibraryPackage()
+    {
+        return rmPackage;
+    }
+
+    public Package getReferenceModelPackage()
+    {
+        return rmPackage;
+    }
+
     public void init()
     {
         checkSession("Initializing Project");
@@ -66,16 +76,30 @@ public class AMLMDProject extends MDProject
         // Import "Use Module" elements
         ph.addUsedModules();
 
-        rootPackage = ph.getRootPackage(AMLConstants.defaultRootPackageName, true);
+        rmPackage = ph.getReferenceModelPackage(AMLConstants.referenceModelPackageName);
+
+        if (rmPackage == null)
+        {
+            AU.warn("No Reference Model FOUND !! Exiting...");
+            return;
+        }
+
+        rootPackage = ph.getRootPackage(AMLConstants.rootPackageName, true, rmPackage);
+
         try
         {
-            rootPackageDiagram = ModelUtils.createDiagram(AMLConstants.defaultRootPackageName,
+            rootPackageDiagram = ModelUtils.createDiagram(AMLConstants.rootPackageName,
                                          DiagramTypeConstants.UML_PACKAGE_DIAGRAM,
                                          rootPackage);
+
+            ph.addElementToDiagram(rootPackage, rootPackageDiagram);
+            ph.addElementToDiagram(rmPackage, rootPackageDiagram);
+
         } catch (ReadOnlyElementException e)
         {
             e.printStackTrace();
         }
+
         // Initialize Project Terminology Structure under the root package.
         // This will create folder and sub-folders for terminology/concept references
         // that are used for this set of archetypes.
@@ -154,7 +178,7 @@ public class AMLMDProject extends MDProject
             archCls = addAMLArchetypeClass(archetype, archPkg, archDiag, localIdentifiers);
 
             // Add constraints here
-            ph.convertComplexDefinition(archetype.getDefinition(), archCls);
+            ph.convertComplexDefinition(archetype.getDefinition(), archCls, archDiag);
 
             // Add to the list of processed archetypes
             processed.put(currentArchId, archCls);

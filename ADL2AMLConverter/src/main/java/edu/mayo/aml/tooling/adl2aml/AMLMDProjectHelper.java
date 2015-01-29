@@ -2,15 +2,16 @@ package edu.mayo.aml.tooling.adl2aml;
 
 import com.google.common.base.Preconditions;
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.core.project.ProjectsManager;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.PresentationElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 import com.nomagic.magicdraw.uml.symbols.*;
-import com.nomagic.magicdraw.uml.symbols.paths.ContainmentLinkView;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.InterfaceRealization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -36,7 +37,7 @@ public class AMLMDProjectHelper
 
     public String getDefaultRootPackageName()
     {
-        return AMLConstants.defaultRootPackageName;
+        return AMLConstants.rootPackageName;
     }
 
     public AMLMDProjectHelper(MDProject mdProject)
@@ -44,17 +45,50 @@ public class AMLMDProjectHelper
         this.mdp = mdProject;
     }
 
-    public Package getRootPackage(String name, boolean create)
+    public Package getRootPackage(String name, boolean create, Package rm)
     {
+        if (AU.isNull(name))
+            return null;
+
         mdp.checkSession("Creating Root Package if needed...");
         Collection<Package> roots = ModelUtils.findPackageForMatchingName(mdp.getProject(), name);
 
         if (!roots.isEmpty())
-            roots.iterator().next();
+            return roots.iterator().next();
 
         if (!create) return null;
 
-        return ModelUtils.createPackage(getDefaultRootPackageName(), mdp.getProject().getModel());
+        // Create Root package aka 'Archetype Library'
+        Package root = ModelUtils.createPackage(getDefaultRootPackageName(),
+                                        mdp.getProject().getModel(),
+                                        AMLConstants.CONSTRAINT_PROFILE,
+                                        AMLConstants.STEREOTYPE_ARCHETYPE_LIBRARY,
+                                        null);
+
+
+        // Add reference model package to show what reference model this
+        // archetype library is talking about.
+        ModelUtils.addPackageImport(root,
+                                    rm,
+                                    AMLConstants.CONSTRAINT_PROFILE,
+                                    AMLConstants.STEREOTYPE_REFERENCE_MODEL,
+                                    null);
+
+        return root;
+    }
+
+    public Package getReferenceModelPackage(String name)
+    {
+        if (AU.isNull(name))
+            return null;
+
+        mdp.checkSession("Finding Reference Model Package with Name:" + name);
+        Collection<Package> roots = ModelUtils.findPackageForMatchingName(mdp.getProject(), name);
+
+        if (!roots.isEmpty())
+            return roots.iterator().next();
+
+        return null;
     }
 
     public void removeAllElements()
@@ -129,8 +163,34 @@ public class AMLMDProjectHelper
         DisplayRelatedSymbols.displayRelatedSymbols(view, info);
     }
 
-    public void convertComplexDefinition(CComplexObject complexConstraint, Class parent)
+    public void convertComplexDefinition(CComplexObject complexConstraint,
+                                         Class currentClass,
+                                         Diagram diagram)
+            throws ReadOnlyElementException
     {
+        Preconditions.checkNotNull(complexConstraint);
+        Preconditions.checkNotNull(currentClass);
 
+        // If this constraint constraint any RM Class
+        // Add "constrains" relationship to the RM Class
+        // To find the RM Class, we create a Regex
+        // which starts with package name and ends at class name
+        String rmClassName = complexConstraint.getRmTypeName();
+        if (!AU.isNull(rmClassName))
+        {
+            String pathRegex = mdp.getReferenceModelPackage().getQualifiedName() + ".*" +
+                    complexConstraint.getRmTypeName();
+
+            Class rmClass = ModelUtils.findClassWithName(mdp.getReferenceModelPackage(), rmClassName);
+
+            Preconditions.checkNotNull(rmClass);
+            Preconditions.checkArgument(rmClass instanceof Class);
+
+            Generalization generalization = ModelUtils.createGeneralization((Class) rmClass, currentClass);
+            ModelUtils.findAndApplyStereotype(generalization, AMLConstants.CONSTRAINT_PROFILE, AMLConstants.STEREOTYPE_CONSTRAINS, null);
+
+            if (diagram != null)
+                addElementToDiagram(rmClass, diagram);
+        }
     }
 }

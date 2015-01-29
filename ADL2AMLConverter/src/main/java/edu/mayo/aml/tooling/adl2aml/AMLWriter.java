@@ -57,6 +57,7 @@ public class AMLWriter extends CommandLine
        AU.debug("<<<<<<<<<<<<   Starting transform...");
 
         amlProject.init();
+        Preconditions.checkNotNull(amlProject.rmPackage);
         Preconditions.checkNotNull(amlProject.getRootPackages());
 
         amlProject.loadADLArchetypes(archetypes);
