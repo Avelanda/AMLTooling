@@ -5,6 +5,7 @@ import org.openehr.jaxb.am.Archetype;
 import org.openehr.jaxb.am.ArchetypeOntology;
 import org.openehr.jaxb.am.ArchetypeTerm;
 import org.openehr.jaxb.am.CodeDefinitionSet;
+import org.openehr.jaxb.rm.MultiplicityInterval;
 import org.openehr.jaxb.rm.StringDictionaryItem;
 
 import java.util.List;
@@ -24,8 +25,8 @@ public class ADLHelper
         {
             // if language is supplied, it has to match with code definition set's language
 
-            if ((language != null)&&(!language.equalsIgnoreCase(cds.getLanguage())))
-                continue;
+            //if ((language != null)&&(!language.equalsIgnoreCase(cds.getLanguage())))
+              //  continue;
 
             for (ArchetypeTerm term : cds.getItems()) {
                 if (term.getCode().equals(id))
@@ -55,5 +56,21 @@ public class ADLHelper
         }
 
         return ids;
+    }
+
+    public static String getMultiplicityInterval(MultiplicityInterval interval)
+    {
+        if (interval == null)
+            return "";
+
+        String intervalStr = "";
+
+        if (interval.getLower() != null)
+            intervalStr = interval.getLower().toString();
+
+        if (interval.getUpper() != null)
+            intervalStr += ".." + interval.getUpper().toString();
+
+        return intervalStr;
     }
 }

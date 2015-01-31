@@ -45,6 +45,9 @@ public class AMLConstants
 
     // Constraints
     public static String STEREOTYPE_COMPLEXOBJECTCONSTRAINT = "ComplexObjectConstraint";
+    public static String STEREOTYPE_ATTRIBUTECOLLECTIONCONSTRAINT = "AttributeCollectionConstraint";
+    public static String STEREOTYPE_SINGULARATTRIBUTECONSTRAINT = "SingularAttributeConstraint";
+
 
 
 

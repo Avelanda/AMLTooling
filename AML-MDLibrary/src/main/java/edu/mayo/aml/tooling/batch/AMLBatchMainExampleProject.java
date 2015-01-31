@@ -71,8 +71,8 @@ public class AMLBatchMainExampleProject extends CommandLine
             Parameter returnParam = ModelUtils.createParameter("address", clsAddress,ParameterDirectionKindEnum.RETURN);
             Operation getAddressOp = ModelUtils.createOperation("getAddressById",Arrays.asList(idParam, returnParam), clsPerson);
 
-            Association comp_assoc = ModelUtils.createAssociation("hasAddress", "addressOf", clsPerson, clsAddress, true, AggregationKindEnum.COMPOSITE);
-            Association self_assoc = ModelUtils.createAssociation("hasRelatives", "relativesOf", clsPerson, clsPerson, true, AggregationKindEnum.SHARED);
+            Association comp_assoc = ModelUtils.createAssociation("hasAddress", "addressOf", "1", "0..*",clsPerson, clsAddress, false, true, AggregationKindEnum.COMPOSITE);
+            Association self_assoc = ModelUtils.createAssociation("hasRelatives", "relativesOf", "1", "0..*", clsPerson, clsPerson, false, true, AggregationKindEnum.SHARED);
 
             Relationship dep = ModelUtils.createDependency("exists", "dependsOn", clsExists, clsPerson, np);
 

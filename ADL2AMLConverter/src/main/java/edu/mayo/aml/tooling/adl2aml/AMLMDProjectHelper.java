@@ -259,7 +259,7 @@ public class AMLMDProjectHelper
 
         for (CAttribute attribute : attributes)
         {
-            String relationName = UMLUtils.createAMLAssociationEndName(attribute.getRmAttributeName());
+            String rmAttributeName = attribute.getRmAttributeName();
 
             for (CObject co : attribute.getChildren())
             {
@@ -274,12 +274,28 @@ public class AMLMDProjectHelper
                             AMLConstants.STEREOTYPE_COMPLEXOBJECTCONSTRAINT,
                             localIds);
 
+                    String relationName = UMLUtils.createAMLAssociationEndName(constraintCls.getName());
+
+                    String multiplicity = ADLHelper.getMultiplicityInterval(attribute.getExistence());
+                    boolean isCollectionConstraint = UMLUtils.isMultipleMultiplicity(multiplicity);
+
+                    String attributeConstraintStereotype = (isCollectionConstraint)?
+                                                    AMLConstants.STEREOTYPE_ATTRIBUTECOLLECTIONCONSTRAINT:
+                                                    AMLConstants.STEREOTYPE_SINGULARATTRIBUTECONSTRAINT;
+
                     Association relToConst = ModelUtils.createAssociation("",
                                                                           relationName,
+                                                                          "1",
+                                                                           multiplicity,
                                                                           currentClass,
                                                                           constraintCls,
+                                                                          false,
                                                                           true,
-                                                                          AggregationKindEnum.NONE);
+                                                                          AggregationKindEnum.NONE,
+                                                                          AMLConstants.CONSTRAINT_PROFILE,
+                                                                          attributeConstraintStereotype,
+                                                                            null);
+
                 }
             }
        }

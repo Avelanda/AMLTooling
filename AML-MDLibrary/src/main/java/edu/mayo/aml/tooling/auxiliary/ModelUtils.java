@@ -289,7 +289,43 @@ public class ModelUtils
         return property;
     }
 
-    public static Association createAssociation(String supplierEndName, String clientEndName, Element supplier, Element client, boolean isNavigable, AggregationKind aggregation)
+    public static Association createAssociation(String supplierEndName,
+                                                String clientEndName,
+                                                String supplierEndMultiplicity,
+                                                String clientEndMultiplicity,
+                                                Element supplier,
+                                                Element client,
+                                                boolean isSupplierNavigable,
+                                                boolean isClientNavigable,
+                                                AggregationKind aggregation,
+                                                String profileName,
+                                                String stereotypeName,
+                                                HashMap<String, Object> tagValues)
+    {
+        Association assoc = createAssociation(supplierEndName,
+                                               clientEndName,
+                                                supplierEndMultiplicity,
+                                                clientEndMultiplicity,
+                                                supplier,
+                                                client,
+                                                isSupplierNavigable,
+                                                isClientNavigable,
+                                                aggregation);
+
+        if (assoc != null)
+             ModelUtils.findAndApplyStereotype(assoc, profileName, stereotypeName, tagValues);
+
+        return assoc;
+    }
+        public static Association createAssociation(String supplierEndName,
+                                                String clientEndName,
+                                                String supplierEndMultiplicity,
+                                                String clientEndMultiplicity,
+                                                Element supplier,
+                                                Element client,
+                                                boolean isSupplierNavigable,
+                                                boolean isClientNavigable,
+                                                AggregationKind aggregation)
     {
         ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
         Association rel = ef.createAssociationInstance();
@@ -298,6 +334,7 @@ public class ModelUtils
 
         if (supplier != null)
         {
+            rel.setVisibility(VisibilityKindEnum.PUBLIC);
             rel.setOwner(supplier);
             ModelHelper.setSupplierElement(rel, supplier);
         }
@@ -315,11 +352,16 @@ public class ModelUtils
         if (!Strings.isNullOrEmpty(clientEndName.trim()))
             propType2.setName(clientEndName);
 
-        ModelHelper.setMultiplicity("1", propType1);
-        ModelHelper.setMultiplicity("0..*", propType2);
+        if ((supplierEndMultiplicity != null)&&
+                (!("".equals(supplierEndMultiplicity.trim()))))
+            ModelHelper.setMultiplicity(supplierEndMultiplicity, propType1);
 
-        ModelHelper.setNavigable(propType1, isNavigable);
-        ModelHelper.setNavigable(propType2, isNavigable);
+        if ((clientEndMultiplicity != null)&&
+                (!("".equals(clientEndMultiplicity.trim()))))
+            ModelHelper.setMultiplicity(clientEndMultiplicity, propType2);
+
+        ModelHelper.setNavigable(propType1, isSupplierNavigable);
+        ModelHelper.setNavigable(propType2, isClientNavigable);
 
         if (aggregation != null)
             propType1.setAggregation(aggregation);
