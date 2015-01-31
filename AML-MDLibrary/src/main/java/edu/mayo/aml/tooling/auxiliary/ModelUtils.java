@@ -262,7 +262,7 @@ public class ModelUtils
     {
         if (container != null)
             for (EnumerationLiteral member : container.getOwnedLiteral())
-                if (member.getName().equals(name))
+                if (member.getName().equalsIgnoreCase(name))
                     return member;
 
         return null;

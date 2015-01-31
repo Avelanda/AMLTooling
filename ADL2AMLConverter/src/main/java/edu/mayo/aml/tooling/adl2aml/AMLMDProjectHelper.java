@@ -15,17 +15,16 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.InterfaceRealization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Enumeration;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import edu.mayo.aml.tooling.adl2aml.utils.AU;
+import edu.mayo.aml.tooling.adl2aml.utils.UMLUtils;
 import edu.mayo.aml.tooling.auxiliary.ModelUtils;
 import org.apache.log4j.Logger;
-import org.openehr.jaxb.am.Archetype;
-import org.openehr.jaxb.am.CComplexObject;
+import org.openehr.jaxb.am.*;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by dks02 on 1/27/15.
@@ -163,9 +162,51 @@ public class AMLMDProjectHelper
         DisplayRelatedSymbols.displayRelatedSymbols(view, info);
     }
 
+    public Class addConstraint(CComplexObject cComplexObject,
+                                     EnumerationLiteral language,
+                                     Package archPackage,
+                                     Diagram diagram,
+                                     ArchetypeOntology ontology,
+                                     String profile,
+                                     String stereotype,
+                                     Enumeration localIds)
+            throws ReadOnlyElementException
+    {
+        String nodeId = cComplexObject.getNodeId();
+        String name = ADLHelper.getTermDefinitionText(ontology,
+                                                    nodeId,
+                                                    language.toString());
+
+        HashMap<String, Object> tagValues = new HashMap<String, Object>();
+        tagValues.put(AMLConstants.TAG_ID,
+                ModelUtils.findEnumerationLiteralInEnumeration(localIds, nodeId));
+        tagValues.put(AMLConstants.TAG_LANGUAGE, language);
+        tagValues.put(AMLConstants.TAG_DESCRIPTION,
+                AMLConstants.DEFAULT_DESCRIPTION);
+        tagValues.put(AMLConstants.TAG_SIGN, name);
+
+        Class constCls = ModelUtils.createClass(name,
+                archPackage,
+                profile,
+                stereotype,
+                tagValues);
+
+        if (constCls != null)
+            addElementToDiagram(constCls, diagram);
+
+        // Add constraints here
+        convertComplexDefinition(cComplexObject, language, archPackage, constCls, diagram, ontology, localIds);
+
+        return constCls;
+    }
+
     public void convertComplexDefinition(CComplexObject complexConstraint,
+                                         EnumerationLiteral language,
+                                         Package archPackage,
                                          Class currentClass,
-                                         Diagram diagram)
+                                         Diagram diagram,
+                                         ArchetypeOntology ontology,
+                                         Enumeration localIds)
             throws ReadOnlyElementException
     {
         Preconditions.checkNotNull(complexConstraint);
@@ -178,19 +219,73 @@ public class AMLMDProjectHelper
         String rmClassName = complexConstraint.getRmTypeName();
         if (!AU.isNull(rmClassName))
         {
-            String pathRegex = mdp.getReferenceModelPackage().getQualifiedName() + ".*" +
-                    complexConstraint.getRmTypeName();
+            //String pathRegex = mdp.getReferenceModelPackage().getQualifiedName() + ".*" +
+            //        complexConstraint.getRmTypeName();
 
-            Class rmClass = ModelUtils.findClassWithName(mdp.getReferenceModelPackage(), rmClassName);
+            //String pathRegex =  complexConstraint.getRmTypeName();
 
-            Preconditions.checkNotNull(rmClass);
-            Preconditions.checkArgument(rmClass instanceof Class);
+            String pr = rmClassName;
+            if (rmClassName.indexOf("<") != -1)
+                pr = rmClassName.split("<")[0];
+
+            Class rmClass = mdp.getRMClass(pr);
+
+            if (rmClass == null)
+                rmClass = ModelUtils.findClassWithName(mdp.getReferenceModelPackage(), pr);
+
+            if (rmClass == null)
+                AU.warn("Could not find RM Class with names " + pr);
+            else
+                mdp.registerRMClass(pr, rmClass);
 
             Generalization generalization = ModelUtils.createGeneralization((Class) rmClass, currentClass);
-            ModelUtils.findAndApplyStereotype(generalization, AMLConstants.CONSTRAINT_PROFILE, AMLConstants.STEREOTYPE_CONSTRAINS, null);
+            ModelUtils.findAndApplyStereotype(generalization,
+                                        AMLConstants.CONSTRAINT_PROFILE,
+                                        AMLConstants.STEREOTYPE_CONSTRAINS,
+                                        null);
 
             if (diagram != null)
-                addElementToDiagram(rmClass, diagram);
+            {
+                if (!mdp.isContainedInDiagram(diagram.getName(), pr))
+                {
+                    addElementToDiagram(rmClass, diagram);
+                    mdp.registerRMClassUsageInDiagram(diagram.getName(), pr);
+                }
+            }
         }
+
+        // Process Attributes of complex constraint
+        List<CAttribute> attributes = complexConstraint.getAttributes();
+
+        for (CAttribute attribute : attributes)
+        {
+            String relationName = UMLUtils.createAMLAssociationEndName(attribute.getRmAttributeName());
+
+            for (CObject co : attribute.getChildren())
+            {
+                if (co instanceof CComplexObject)
+                {
+                    Class constraintCls = addConstraint((CComplexObject) co,
+                            language,
+                            archPackage,
+                            diagram,
+                            ontology,
+                            AMLConstants.CONSTRAINT_PROFILE,
+                            AMLConstants.STEREOTYPE_COMPLEXOBJECTCONSTRAINT,
+                            localIds);
+
+                    Association relToConst = ModelUtils.createAssociation("",
+                                                                          relationName,
+                                                                          currentClass,
+                                                                          constraintCls,
+                                                                          true,
+                                                                          AggregationKindEnum.NONE);
+                }
+            }
+       }
+
+        // Process AttributeTuples of complex constraint
+        //complexConstraint.getAttributeTuples();
+
     }
 }

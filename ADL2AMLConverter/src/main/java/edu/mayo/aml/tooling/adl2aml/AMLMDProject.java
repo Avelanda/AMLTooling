@@ -13,10 +13,14 @@ import edu.mayo.aml.tooling.auxiliary.ModelUtils;
 import edu.mayo.aml.tooling.auxiliary.ProjectUtils;
 import org.apache.log4j.Logger;
 import org.openehr.jaxb.am.Archetype;
+import org.openehr.jaxb.am.ArchetypeOntology;
+import org.openehr.jaxb.am.CComplexObject;
+import org.openehr.jaxb.rm.CodePhrase;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
 
 /**
  * Created by dks02 on 1/20/15.
@@ -31,7 +35,6 @@ public class AMLMDProject extends MDProject
 
     private AMLMDProjectHelper ph = null;
     private AMLMDProjectTerms pt = null;
-    private AMLMDProjectCommons pc = null;
 
     private HashMap<String, Archetype> adlArchetypes = new HashMap<String, Archetype>();
     private HashMap<String, Class> processed = new HashMap<String, Class>();
@@ -54,7 +57,6 @@ public class AMLMDProject extends MDProject
 
         ph = new AMLMDProjectHelper(this);
         pt = new AMLMDProjectTerms(this);
-        pc = new AMLMDProjectCommons(this);
     }
 
     public Package getArchetypeLibraryPackage()
@@ -66,6 +68,7 @@ public class AMLMDProject extends MDProject
     {
         return rmPackage;
     }
+
 
     public void init()
     {
@@ -175,10 +178,10 @@ public class AMLMDProject extends MDProject
             Enumeration localIdentifiers = pt.addLocalTerms(archetype.getOntology(), archPkg);
             ph.addElementToDiagram(localIdentifiers, archDiag);
 
-            archCls = addAMLArchetypeClass(archetype, archPkg, archDiag, localIdentifiers);
+            if (archetype.getDefinition() == null)
+                return null;
 
-            // Add constraints here
-            ph.convertComplexDefinition(archetype.getDefinition(), archCls, archDiag);
+            archCls = processArchetype(archetype, archPkg, archDiag, localIdentifiers);
 
             // Add to the list of processed archetypes
             processed.put(currentArchId, archCls);
@@ -195,37 +198,29 @@ public class AMLMDProject extends MDProject
         return archCls;
     }
 
-    private Class addAMLArchetypeClass(Archetype archetype,
-                                       Package archPackage,
-                                       Diagram diagram,
-                                       Enumeration localIds)
-            throws ReadOnlyElementException
+    private Class processArchetype(Archetype archetype,
+                                   Package pkg,
+                                   Diagram diag,
+                                   Enumeration localIds)
+                        throws ReadOnlyElementException
     {
-        if (archetype.getDefinition() == null)
-            return null;
+        String language = archetype.getOriginalLanguage().getCodeString();
+        EnumerationLiteral archLang = AMLMDProjectCommons.getThisOrEnglish(getProject(),
+                                                            language);
 
-        String nodeId = archetype.getDefinition().getNodeId();
-        String archVersionName = ADLHelper.getTermDefinitionText(archetype,
-                nodeId,
-                archetype.getOriginalLanguage().getCodeString());
+        if (archLang == null)
+            archLang = AMLMDProjectCommons.getEnglishLanguage(getProject());
 
-        HashMap<String, Object> tagValues = new HashMap<String, Object>();
-        tagValues.put(AMLConstants.TAG_ID, ModelUtils.findEnumerationLiteralInEnumeration(localIds, nodeId));
-        tagValues.put(AMLConstants.TAG_LANGUAGE, pc.getThisOrEnglish(archetype.getOriginalLanguage().getCodeString()));
-        tagValues.put(AMLConstants.TAG_DESCRIPTION, AMLConstants.DEFAULT_DESCRIPTION);
-        tagValues.put(AMLConstants.TAG_SIGN, archVersionName);
-
-        Class archCls = ModelUtils.createClass(archVersionName,
-                archPackage,
+        Class archCls = ph.addConstraint(archetype.getDefinition(),
+                archLang, pkg, diag,
+                archetype.getOntology(),
                 AMLConstants.CONSTRAINT_PROFILE,
                 AMLConstants.STEREOTYPE_ARCHETYPE_VERSION,
-                tagValues);
-
-        if (archCls != null)
-            ph.addElementToDiagram(archCls, diagram);
+                localIds);
 
         return archCls;
     }
+
 
     private void addParentArchetype(Archetype archetype,
                                     Class archClass,

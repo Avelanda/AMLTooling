@@ -43,6 +43,10 @@ public class AMLConstants
     public static String STEREOTYPE_CONSTRAINS = "Constrains";
     public static String STEREOTYPE_SCOPEDIDENTIFIER = "ScopedIdentifier";
 
+    // Constraints
+    public static String STEREOTYPE_COMPLEXOBJECTCONSTRAINT = "ComplexObjectConstraint";
+
+
 
     // tags
     public static String TAG_URI = "uri";

@@ -5,6 +5,7 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Enumeration;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
+import edu.mayo.aml.tooling.adl2aml.utils.AU;
 import edu.mayo.aml.tooling.auxiliary.ModelUtils;
 
 /**
@@ -12,31 +13,28 @@ import edu.mayo.aml.tooling.auxiliary.ModelUtils;
  */
 public class AMLMDProjectCommons
 {
-    private MDProject mdp = null;
 
-    public AMLMDProjectCommons(MDProject mdProject)
+    public static Enumeration getLanguages(Project project)
     {
-        this.mdp = mdProject;
+        return (Enumeration) ModelHelper.findElementWithPath(project, "CommonResources::Languages::Languages", Enumeration.class);
     }
 
-    public Enumeration getLanguages()
+    public static EnumerationLiteral getThisOrEnglish(Project project, String name)
     {
-        return (Enumeration) ModelHelper.findElementWithPath(mdp.getProject(), "CommonResources::Languages::Languages", Enumeration.class);
-    }
+        if (AU.isNull(name))
+            return getEnglishLanguage(project);
 
-    public EnumerationLiteral getThisOrEnglish(String name)
-    {
-        EnumerationLiteral language = getLanugageByName(name);
+        EnumerationLiteral language = getLanugageByName(project, name);
 
         if (language == null)
-            return getEnglishLanguage();
+            return getEnglishLanguage(project);
 
         return language;
     }
 
-    public EnumerationLiteral getLanugageByName(String languageCodeOrName)
+    public static EnumerationLiteral getLanugageByName(Project project, String languageCodeOrName)
     {
-        return ModelUtils.findEnumerationLiteralInEnumeration(getLanguages(), languageCodeOrName);
+        return ModelUtils.findEnumerationLiteralInEnumeration(getLanguages(project), languageCodeOrName);
 
 //        Element languages = getLanguages();
 //
@@ -53,8 +51,8 @@ public class AMLMDProjectCommons
 //        return null;
     }
 
-    private EnumerationLiteral getEnglishLanguage()
+    public static EnumerationLiteral getEnglishLanguage(Project project)
     {
-        return getLanugageByName("en");
+        return getLanugageByName(project, "en");
     }
 }

@@ -15,14 +15,15 @@ import java.util.Vector;
  */
 public class ADLHelper
 {
-    public static String getTermDefinitionText(Archetype archetype, String id, String language)
+    public static String getTermDefinitionText(ArchetypeOntology archetypeOntology, String id, String language)
     {
-        Preconditions.checkNotNull(archetype);
+        Preconditions.checkNotNull(archetypeOntology);
         Preconditions.checkNotNull(id);
 
-        for (CodeDefinitionSet cds : archetype.getOntology().getTermDefinitions())
+        for (CodeDefinitionSet cds : archetypeOntology.getTermDefinitions())
         {
             // if language is supplied, it has to match with code definition set's language
+
             if ((language != null)&&(!language.equalsIgnoreCase(cds.getLanguage())))
                 continue;
 

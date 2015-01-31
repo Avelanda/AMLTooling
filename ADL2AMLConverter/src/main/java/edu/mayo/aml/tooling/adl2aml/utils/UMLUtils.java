@@ -49,4 +49,23 @@ public class UMLUtils
 
         return ret;
     }
+
+    public static String createAMLAssociationEndName(String name)
+    {
+        Preconditions.checkNotNull(name);
+
+        return name.replaceAll(" ", "").toLowerCase();
+    }
+
+    public static String createAMLClassName(String name)
+    {
+        Preconditions.checkNotNull(name);
+
+        String nm = name.replaceAll(" ", "");
+
+        if (nm.length() == 1)
+            return nm.toUpperCase();
+
+        return nm.substring(0,0).toUpperCase() + nm.substring(1);
+    }
 }
