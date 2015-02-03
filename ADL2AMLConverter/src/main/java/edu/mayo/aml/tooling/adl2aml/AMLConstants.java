@@ -38,6 +38,7 @@ public class AMLConstants
     public static String STEREOTYPE_ARCHETYPE_LIBRARY = "ArchetypeLibrary";
     public static String STEREOTYPE_REFERENCE_MODEL = "ReferenceModel";
     public static String STEREOTYPE_ARCHETYPE = "Archetype";
+    public static String STEREOTYPE_ARCHETYPE_ROOT_PROXY = "ArchetypeRootProxy";
     public static String STEREOTYPE_ARCHETYPE_VERSION = "ArchetypeVersion";
     public static String STEREOTYPE_CONCEPT_REFERENCE = "ConceptReference";
     public static String STEREOTYPE_CONSTRAINS = "Constrains";
@@ -45,6 +46,7 @@ public class AMLConstants
 
     // Constraints
     public static String STEREOTYPE_COMPLEXOBJECTCONSTRAINT = "ComplexObjectConstraint";
+    public static String STEREOTYPE_ARCHETYPEROOTCONSTRAINT = "ArchetypeRootConstraint";
     public static String STEREOTYPE_ATTRIBUTECOLLECTIONCONSTRAINT = "AttributeCollectionConstraint";
     public static String STEREOTYPE_SINGULARATTRIBUTECONSTRAINT = "SingularAttributeConstraint";
 
@@ -64,5 +66,4 @@ public class AMLConstants
     public static String ATTRIBUTE_TEXT = "text";
 
     public static String DEFAULT_DESCRIPTION = "";
-
 }

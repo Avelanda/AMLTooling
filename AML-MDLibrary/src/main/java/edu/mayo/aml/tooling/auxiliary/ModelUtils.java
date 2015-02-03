@@ -289,6 +289,18 @@ public class ModelUtils
         return property;
     }
 
+    public static boolean isMultipleMultiplicity(String multiplicityString)
+    {
+        if ((multiplicityString == null)||("".equals(multiplicityString.trim())))
+            return false;
+
+        if ((multiplicityString.endsWith(".."))||
+                (multiplicityString.endsWith("*")))
+            return true;
+
+        return false;
+    }
+
     public static Association createAssociation(String supplierEndName,
                                                 String clientEndName,
                                                 String supplierEndMultiplicity,
@@ -300,6 +312,7 @@ public class ModelUtils
                                                 AggregationKind aggregation,
                                                 String profileName,
                                                 String stereotypeName,
+                                                Property constrainedAttribute,
                                                 HashMap<String, Object> tagValues)
     {
         Association assoc = createAssociation(supplierEndName,
@@ -313,7 +326,21 @@ public class ModelUtils
                                                 aggregation);
 
         if (assoc != null)
-             ModelUtils.findAndApplyStereotype(assoc, profileName, stereotypeName, tagValues);
+        {
+            for (Property memEnd : assoc.getMemberEnd())
+                if (memEnd.getName().equals(clientEndName))
+                {
+                    //System.out.println("Applying stereotype :" + stereotypeName + " to member end :" + memEnd.getName());
+                    ModelUtils.findAndApplyStereotype(memEnd, profileName, stereotypeName, tagValues);
+
+                    if (ModelUtils.isMultipleMultiplicity(clientEndMultiplicity))
+                        memEnd.getSubsettedProperty().add(constrainedAttribute);
+                    else
+                        memEnd.getRedefinedProperty().add(constrainedAttribute);
+
+                    memEnd.setVisibility(VisibilityKindEnum.PUBLIC);
+                }
+        }
 
         return assoc;
     }
@@ -331,16 +358,18 @@ public class ModelUtils
         Association rel = ef.createAssociationInstance();
 
         rel.setName(supplierEndName);
+        rel.setVisibility(VisibilityKindEnum.PUBLIC);
 
         if (supplier != null)
         {
-            rel.setVisibility(VisibilityKindEnum.PUBLIC);
             rel.setOwner(supplier);
             ModelHelper.setSupplierElement(rel, supplier);
         }
 
         if (client != null)
+        {
             ModelHelper.setClientElement(rel, client);
+        }
 
         Property propType1 = ModelHelper.getFirstMemberEnd(rel);
 

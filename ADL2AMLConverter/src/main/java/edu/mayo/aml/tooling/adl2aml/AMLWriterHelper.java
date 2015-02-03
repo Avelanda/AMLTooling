@@ -14,42 +14,24 @@ import java.util.Vector;
  */
 public class AMLWriterHelper
 {
-    private Vector<String> targetArchetypeIds = new Vector<String>();
-
-    public AMLWriterHelper()
-    {
-        targetArchetypeIds.add("CIMI-CORE-ITEM_GROUP.cluster.v1.0.0");
-        targetArchetypeIds.add("CIMI-CORE-ITEM_GROUP.clinical_statement.v1.0.0");
-        targetArchetypeIds.add("CIMI-CORE-ITEM_GROUP.compound_clinical_statement.v1.0.0");
-        targetArchetypeIds.add("CIMI-CORE-ITEM_GROUP.indivisible_clinical_statement.v1.0.0");
-        targetArchetypeIds.add("CIMI-CORE-ITEM_GROUP.clinical_document.v2.0.0");
-        targetArchetypeIds.add("CIMI-CORE-ITEM_GROUP.clinical_report_header.v1.0.0");
-        targetArchetypeIds.add("CIMI-CORE-ITEM_GROUP.action.v1.0.0");
-        targetArchetypeIds.add("CIMI-CORE-ITEM_GROUP.author_action.v1.0.0");
-        targetArchetypeIds.add("CIMI-CORE-ITEM_GROUP.issue_action.v1.0.0");
-    }
-
-    public boolean toProecess(Archetype archetype)
-    {
-        if (archetype == null)
-            return false;
-
-        if (targetArchetypeIds.contains(archetype.getArchetypeId().getValue()))
-            return true;
-
-        return false;
-    }
-
-    public static String getArchetypeIdWithoutMinorVersion(Archetype archetype)
-    {
-        Preconditions.checkNotNull(archetype);
-        return AMLWriterHelper.removeMinorVersion(archetype.getArchetypeId().getValue());
-    }
-
-    public static String removeMinorVersion(String str)
+    private static String removeMinorVersion(String str)
     {
         if (!AU.isNull(str))
-           return (str.split("\\.[0-9]*\\.[0-9]*"))[0];
+            return (str.split("\\.[0-9]*\\.[0-9]*"))[0];
+
+        return str;
+    }
+
+    public static String getSearchId(Archetype archetype)
+    {
+        Preconditions.checkNotNull(archetype);
+        return getSearchId(archetype.getArchetypeId().getValue());
+    }
+
+    public static String getSearchId(String str)
+    {
+        if (str != null)
+            return AMLWriterHelper.removeMinorVersion(str);
 
         return str;
     }

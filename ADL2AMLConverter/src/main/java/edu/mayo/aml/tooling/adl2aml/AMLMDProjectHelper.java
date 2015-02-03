@@ -121,7 +121,7 @@ public class AMLMDProjectHelper
     {
         mdp.checkSession("Creating Archetype Package...");
         // Archetype creation Begin
-        String amlArchId = AMLWriterHelper.getArchetypeIdWithoutMinorVersion(archetype);
+        String amlArchId = AMLWriterHelper.getSearchId(archetype);
         AU.debug("Creating AML Archetype Package: " + amlArchId);
 
         return ModelUtils.createPackage(amlArchId,
@@ -140,9 +140,16 @@ public class AMLMDProjectHelper
 
     public void addElementToDiagram(Element element, Diagram diagram) throws ReadOnlyElementException
     {
-        mdp.checkSession("Adding to the diagram...");
-        DiagramPresentationElement pe = mdp.getProject().getDiagram(diagram);
-        PresentationElementsManager.getInstance().createShapeElement(element, pe);
+        if (diagram != null)
+        {
+            if (!mdp.isContainedInDiagram(diagram.getName(), element.getID()))
+            {
+                mdp.checkSession("Adding to the diagram...");
+                DiagramPresentationElement pe = mdp.getProject().getDiagram(diagram);
+                PresentationElementsManager.getInstance().createShapeElement(element, pe);
+                mdp.registerRMClassUsageInDiagram(diagram.getName(), element.getID());
+            }
+        }
     }
 
     public void displayRelatedInformation(Diagram diagram) throws ReadOnlyElementException
@@ -164,7 +171,7 @@ public class AMLMDProjectHelper
 
     public Class addConstraint(CComplexObject cComplexObject,
                                      EnumerationLiteral language,
-                                     Package archPackage,
+                                     Element parentElement,
                                      Diagram diagram,
                                      ArchetypeOntology ontology,
                                      String profile,
@@ -186,7 +193,7 @@ public class AMLMDProjectHelper
         tagValues.put(AMLConstants.TAG_SIGN, name);
 
         Class constCls = ModelUtils.createClass(name,
-                archPackage,
+                parentElement,
                 profile,
                 stereotype,
                 tagValues);
@@ -194,15 +201,11 @@ public class AMLMDProjectHelper
         if (constCls != null)
             addElementToDiagram(constCls, diagram);
 
-        // Add constraints here
-        convertComplexDefinition(cComplexObject, language, archPackage, constCls, diagram, ontology, localIds);
-
         return constCls;
     }
 
     public void convertComplexDefinition(CComplexObject complexConstraint,
                                          EnumerationLiteral language,
-                                         Package archPackage,
                                          Class currentClass,
                                          Diagram diagram,
                                          ArchetypeOntology ontology,
@@ -217,6 +220,7 @@ public class AMLMDProjectHelper
         // To find the RM Class, we create a Regex
         // which starts with package name and ends at class name
         String rmClassName = complexConstraint.getRmTypeName();
+        Class rmClass = null;
         if (!AU.isNull(rmClassName))
         {
             //String pathRegex = mdp.getReferenceModelPackage().getQualifiedName() + ".*" +
@@ -225,10 +229,11 @@ public class AMLMDProjectHelper
             //String pathRegex =  complexConstraint.getRmTypeName();
 
             String pr = rmClassName;
+            // in case of templated type like DTV_INTERVAL<DATA_VALUE>
             if (rmClassName.indexOf("<") != -1)
                 pr = rmClassName.split("<")[0];
 
-            Class rmClass = mdp.getRMClass(pr);
+            rmClass = mdp.getRMClass(pr);
 
             if (rmClass == null)
                 rmClass = ModelUtils.findClassWithName(mdp.getReferenceModelPackage(), pr);
@@ -244,14 +249,7 @@ public class AMLMDProjectHelper
                                         AMLConstants.STEREOTYPE_CONSTRAINS,
                                         null);
 
-            if (diagram != null)
-            {
-                if (!mdp.isContainedInDiagram(diagram.getName(), pr))
-                {
-                    addElementToDiagram(rmClass, diagram);
-                    mdp.registerRMClassUsageInDiagram(diagram.getName(), pr);
-                }
-            }
+            addElementToDiagram(rmClass, diagram);
         }
 
         // Process Attributes of complex constraint
@@ -261,42 +259,107 @@ public class AMLMDProjectHelper
         {
             String rmAttributeName = attribute.getRmAttributeName();
 
+            String supplierMultiplicity = ADLHelper.getMultiplicityInterval(attribute.getExistence());
+
+            if (AU.isNull(supplierMultiplicity))
+                supplierMultiplicity = "1";
+
             for (CObject co : attribute.getChildren())
             {
+                Class constraintCls = null;
                 if (co instanceof CComplexObject)
                 {
-                    Class constraintCls = addConstraint((CComplexObject) co,
-                            language,
-                            archPackage,
-                            diagram,
-                            ontology,
-                            AMLConstants.CONSTRAINT_PROFILE,
-                            AMLConstants.STEREOTYPE_COMPLEXOBJECTCONSTRAINT,
-                            localIds);
+                    if (co instanceof CArchetypeRoot)
+                    {
+                        CArchetypeRoot caRoot = (CArchetypeRoot) co;
+                        constraintCls =  addConstraint(caRoot,
+                                language,
+                                currentClass,
+                                diagram,
+                                ontology,
+                                AMLConstants.CONSTRAINT_PROFILE,
+                                AMLConstants.STEREOTYPE_ARCHETYPE_ROOT_PROXY,
+                                localIds);
 
-                    String relationName = UMLUtils.createAMLAssociationEndName(constraintCls.getName());
+                        Class referencedClass = mdp.getOrCreateAMLArchetype(caRoot.getArchetypeRef());
 
-                    String multiplicity = ADLHelper.getMultiplicityInterval(attribute.getExistence());
-                    boolean isCollectionConstraint = UMLUtils.isMultipleMultiplicity(multiplicity);
+                        if (constraintCls == null)
+                            continue;
 
-                    String attributeConstraintStereotype = (isCollectionConstraint)?
-                                                    AMLConstants.STEREOTYPE_ATTRIBUTECOLLECTIONCONSTRAINT:
-                                                    AMLConstants.STEREOTYPE_SINGULARATTRIBUTECONSTRAINT;
+                        if (referencedClass == null)
+                            continue;
 
-                    Association relToConst = ModelUtils.createAssociation("",
-                                                                          relationName,
-                                                                          "1",
-                                                                           multiplicity,
-                                                                          currentClass,
-                                                                          constraintCls,
-                                                                          false,
-                                                                          true,
-                                                                          AggregationKindEnum.NONE,
-                                                                          AMLConstants.CONSTRAINT_PROFILE,
-                                                                          attributeConstraintStereotype,
-                                                                            null);
-
+                        Generalization generalization = ModelUtils.createGeneralization(referencedClass, constraintCls);
+                        ModelUtils.findAndApplyStereotype(generalization,
+                                AMLConstants.CONSTRAINT_PROFILE,
+                                AMLConstants.STEREOTYPE_ARCHETYPEROOTCONSTRAINT,
+                                null);
+                    }
+                    else
+                        constraintCls = addConstraint((CComplexObject) co,
+                                language,
+                                currentClass,
+                                diagram,
+                                ontology,
+                                AMLConstants.CONSTRAINT_PROFILE,
+                                AMLConstants.STEREOTYPE_COMPLEXOBJECTCONSTRAINT,
+                                localIds);
                 }
+
+                if (constraintCls == null)
+                    continue;
+
+                addElementToDiagram(constraintCls, diagram);
+
+                String relationName = UMLUtils.createAMLAssociationEndName(constraintCls.getName());
+
+                String multiplicity = ADLHelper.getMultiplicityInterval(co.getOccurrences());
+                boolean isCollectionConstraint = ModelUtils.isMultipleMultiplicity(multiplicity);
+
+                String attributeConstraintStereotype = (isCollectionConstraint)?
+                        AMLConstants.STEREOTYPE_ATTRIBUTECOLLECTIONCONSTRAINT:
+                        AMLConstants.STEREOTYPE_SINGULARATTRIBUTECONSTRAINT;
+
+                Property constrainedRMAttribute = null;
+                String rmAttribute = attribute.getRmAttributeName();
+                if (!AU.isNull(rmAttribute))
+                {
+                    if (rmClass != null)
+                        for (Property attrib : rmClass.getAttribute())
+                            if (attrib.getName().equals(rmAttribute))
+                            {
+                                constrainedRMAttribute = attrib;
+                                break;
+                            }
+
+                    if (constrainedRMAttribute == null)
+                    {
+                        Object crma = ModelUtils.findElementWithPath(mdp.getProject(),
+                                rmClass.getQualifiedName() + "::" + rmAttribute, Property.class);
+
+                        if (crma != null)
+                            constrainedRMAttribute = (Property) crma;
+                    }
+                }
+
+
+                Association relToConst = ModelUtils.createAssociation("",
+                                                            relationName,
+                                                            supplierMultiplicity,
+                                                            multiplicity,
+                                                            currentClass,
+                                                            constraintCls,
+                                                            false,
+                                                            true,
+                                                            AggregationKindEnum.NONE,
+                                                            AMLConstants.CONSTRAINT_PROFILE,
+                                                            attributeConstraintStereotype,
+                                                            constrainedRMAttribute,
+                                                            null);
+
+                // Add constraints here
+                if (!(co instanceof CArchetypeRoot))
+                    convertComplexDefinition((CComplexObject) co, language, constraintCls, diagram, ontology, localIds);
             }
        }
 

@@ -33,17 +33,12 @@ public class AMLWriter extends CommandLine
     private AMLMDProject amlProject = null;
     private AMLWriterHelper helper = new AMLWriterHelper();
 
-    public boolean applyFilter = true;
-
     public void queue(Archetype archetype)
     {
         if ((archetype == null)||(archetype.getArchetypeId() == null))
             return;
 
-        if ((applyFilter)&&(!helper.toProecess(archetype)))
-            return;
-
-        archetypes.put(AMLWriterHelper.getArchetypeIdWithoutMinorVersion(archetype), archetype);
+        archetypes.put(AMLWriterHelper.getSearchId(archetype), archetype);
     }
 
     @Override

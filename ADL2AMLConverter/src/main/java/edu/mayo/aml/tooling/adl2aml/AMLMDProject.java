@@ -132,7 +132,7 @@ public class AMLMDProject extends MDProject
         {
             try
             {
-                addArchetype(archetype);
+                getOrCreateAMLArchetype(archetype);
             }
             catch(Exception e)
             {
@@ -146,25 +146,50 @@ public class AMLMDProject extends MDProject
                 " Failed=" + failed);
     }
 
-    public Class addArchetype(Archetype archetype)
+    public Class getOrCreateAMLArchetype(String archetypeId)
+    {
+        if (archetypeId == null)
+            return null;
+
+        // Check if already processed or not
+        String archIdWithoutMinor = AMLWriterHelper.getSearchId(archetypeId);
+
+        Class archCls = processed.get(archIdWithoutMinor);
+
+        if (archCls != null) {
+            AU.debug("\tRequested Archetype " + archetypeId + " already in processed status!");
+            return archCls;
+        }
+
+        return createAMLArchetype(adlArchetypes.get(archIdWithoutMinor));
+    }
+
+    public Class getOrCreateAMLArchetype(Archetype archetype)
     {
         if (archetype == null)
             return null;
 
         // Check if already processed or not
-        String currentArchId = AMLWriterHelper.getArchetypeIdWithoutMinorVersion(archetype);
+        String currentArchId = AMLWriterHelper.getSearchId(archetype);
+
         Class archCls = processed.get(currentArchId);
 
-        if (archCls != null)
-        {
-            AU.debug("Archetype " + currentArchId + " Already processed!");
+        if (archCls != null) {
+            AU.debug("\tRequested Archetype " + currentArchId + " already in processed status!");
             return archCls;
         }
 
+        return createAMLArchetype(archetype);
+    }
+
+    private Class createAMLArchetype(Archetype archetype)
+    {
+        Class archCls = null;
+
         AU.debug("####################### BEGIN #######################################");
         AU.debug("Archetype: " + archetype.getArchetypeId().getValue());
-        if ((archetype.getDescription() != null) && (archetype.getDescription().getDetails().size() > 0))
-            AU.debug("Description: " + archetype.getDescription().getDetails().get(0).getPurpose());
+        //if ((archetype.getDescription() != null) && (archetype.getDescription().getDetails().size() > 0))
+        //    AU.debug("Description: " + archetype.getDescription().getDetails().get(0).getPurpose());
 
         try
         {
@@ -181,11 +206,36 @@ public class AMLMDProject extends MDProject
             if (archetype.getDefinition() == null)
                 return null;
 
-            archCls = processArchetype(archetype, archPkg, archDiag, localIdentifiers);
+            String language = archetype.getOriginalLanguage().getCodeString();
+            EnumerationLiteral archLang = AMLMDProjectCommons.getThisOrEnglish(getProject(),
+                    language);
+
+            if (archLang == null)
+                archLang = AMLMDProjectCommons.getEnglishLanguage(getProject());
+
+
+            archCls = processArchetype(archetype, archPkg, archDiag, archLang,localIdentifiers);
+
+            String currentArchId = AMLWriterHelper.getSearchId(archetype);
 
             // Add to the list of processed archetypes
             processed.put(currentArchId, archCls);
-            addParentArchetype(archetype, archCls, currentArchId, archDiag);
+
+            if (archetype.getParentArchetypeId() != null)
+            {
+                Class parentClass = getOrCreateAMLArchetype(archetype.getParentArchetypeId().getValue());
+
+                if ((parentClass != null)&&(!parentClass.getName().equals(archCls.getName())))
+                    addParentArchetype(parentClass, archCls, currentArchId, archDiag);
+            }
+
+            ph.convertComplexDefinition(archetype.getDefinition(),
+                    archLang,
+                    archCls,
+                    archDiag,
+                    archetype.getOntology(),
+                    localIdentifiers);
+
             ph.displayRelatedInformation(archDiag);
         }
         catch(ReadOnlyElementException roe)
@@ -201,16 +251,10 @@ public class AMLMDProject extends MDProject
     private Class processArchetype(Archetype archetype,
                                    Package pkg,
                                    Diagram diag,
+                                   EnumerationLiteral archLang,
                                    Enumeration localIds)
                         throws ReadOnlyElementException
     {
-        String language = archetype.getOriginalLanguage().getCodeString();
-        EnumerationLiteral archLang = AMLMDProjectCommons.getThisOrEnglish(getProject(),
-                                                            language);
-
-        if (archLang == null)
-            archLang = AMLMDProjectCommons.getEnglishLanguage(getProject());
-
         Class archCls = ph.addConstraint(archetype.getDefinition(),
                 archLang, pkg, diag,
                 archetype.getOntology(),
@@ -222,34 +266,37 @@ public class AMLMDProject extends MDProject
     }
 
 
-    private void addParentArchetype(Archetype archetype,
+    private void addParentArchetype(Class parentCls,
                                     Class archClass,
                                     String archId, Diagram diagram)
             throws ReadOnlyElementException
     {
-        // Find and add parent if there is one (using Specialization with "constrains" stereotype)
-        String parentArchId = "";
-        Class parentCls = null;
-        if (archetype.getParentArchetypeId() != null)
-            parentArchId = AMLWriterHelper.removeMinorVersion(archetype.getParentArchetypeId().getValue());
+        if (parentCls == null)
+            return;
 
-        if(!AU.isNull(parentArchId))
-        {
-            if (!archId.equals(parentArchId))
-            {
-                Archetype parent = adlArchetypes.get(parentArchId);
-
-                if (parent == null)
-                    AU.debug("Archetype Parent " + parentArchId + " not found in given list of archetypes. Skipping...");
-                else
-                {
-                    AU.debug("Adding Parent:" + parentArchId);
-                    parentCls = addArchetype(adlArchetypes.get(parentArchId));
-                }
-            }
-            else
-                parentCls = archClass;
-        }
+//        // Find and add parent if there is one (using Specialization with "constrains" stereotype)
+//        String parentArchId = "";
+//        Class parentCls = null;
+//        if (archetype.getParentArchetypeId() != null)
+//            parentArchId = AMLWriterHelper.removeMinorVersion(archetype.getParentArchetypeId().getValue());
+//
+//        if(!AU.isNull(parentArchId))
+//        {
+//            if (!archId.equals(parentArchId))
+//            {
+//                Archetype parent = adlArchetypes.get(parentArchId);
+//
+//                if (parent == null)
+//                    AU.debug("Archetype Parent " + parentArchId + " not found in given list of archetypes. Skipping...");
+//                else
+//                {
+//                    AU.debug("Adding Parent:" + parentArchId);
+//                    parentCls = addArchetype(adlArchetypes.get(parentArchId));
+//                }
+//            }
+//            else
+//                parentCls = archClass;
+//        }
 
         if (parentCls != null)
         {

@@ -68,16 +68,4 @@ public class UMLUtils
 
         return nm.substring(0,0).toUpperCase() + nm.substring(1);
     }
-
-    public static boolean isMultipleMultiplicity(String multiplicityString)
-    {
-        if (AU.isNull(multiplicityString))
-            return false;
-
-        if ((multiplicityString.endsWith(".."))||
-                (multiplicityString.endsWith("*")))
-            return true;
-
-        return false;
-    }
 }

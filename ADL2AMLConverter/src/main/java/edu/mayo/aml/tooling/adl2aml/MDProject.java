@@ -10,6 +10,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import edu.mayo.aml.tooling.adl2aml.utils.AU;
 import edu.mayo.aml.tooling.auxiliary.ProjectUtils;
 import org.apache.log4j.Logger;
+import org.openehr.jaxb.am.Archetype;
 
 import java.io.File;
 import java.util.Collection;
@@ -39,12 +40,12 @@ public abstract class MDProject
         return mdProject;
     }
 
-    public boolean isContainedInDiagram(String diagName, String rmName)
+    public boolean isContainedInDiagram(String diagName, String elementId)
     {
         if (AU.isNull(diagName))
             return false;
 
-        if (AU.isNull(rmName))
+        if (AU.isNull(elementId))
             return false;
 
         Vector<String> rms = rmClassesInDiag.get(diagName);
@@ -52,7 +53,7 @@ public abstract class MDProject
         if (rms == null)
             return false;
 
-        return rms.contains(rmName);
+        return rms.contains(elementId);
     }
 
     public void registerRMClassUsageInDiagram(String diagName, String rmName)
@@ -122,4 +123,6 @@ public abstract class MDProject
 
     public abstract Package getArchetypeLibraryPackage();
     public abstract Package getReferenceModelPackage();
+    public abstract Class getOrCreateAMLArchetype(String archetypeId);
+    public abstract Class getOrCreateAMLArchetype(Archetype archetype);
 }

@@ -68,8 +68,12 @@ public class ADLHelper
         if (interval.getLower() != null)
             intervalStr = interval.getLower().toString();
 
+        intervalStr += "..";
+
         if (interval.getUpper() != null)
-            intervalStr += ".." + interval.getUpper().toString();
+            intervalStr += interval.getUpper().toString();
+        else
+            intervalStr += "*";
 
         return intervalStr;
     }
