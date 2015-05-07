@@ -4,62 +4,21 @@
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/target/test-classes" />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/target" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/target/generated-sources" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/target/generated-test-sources" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
-      <excludeFolder url="file://$MODULE_DIR$/target/classes" />
-      <excludeFolder url="file://$MODULE_DIR$/target/maven-archiver" />
-      <excludeFolder url="file://$MODULE_DIR$/target/maven-status" />
-      <excludeFolder url="file://$MODULE_DIR$/target/surefire-reports" />
-      <excludeFolder url="file://$MODULE_DIR$/target/test-classes" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="AMLTooling" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file:///Applications/Cameo Enterprise Architecture/lib" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file:///Applications/Cameo Enterprise Architecture/lib" />
-        </SOURCES>
-        <jarDirectory url="file:///Applications/Cameo Enterprise Architecture/lib" recursive="false" />
-        <jarDirectory url="file:///Applications/Cameo Enterprise Architecture/lib" recursive="false" type="SOURCES" />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file:///Applications/Cameo Enterprise Architecture/lib/graphics" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-        <jarDirectory url="file:///Applications/Cameo Enterprise Architecture/lib/graphics" recursive="false" />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file:///Applications/Cameo Enterprise Architecture/lib/webservice" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-        <jarDirectory url="file:///Applications/Cameo Enterprise Architecture/lib/webservice" recursive="false" />
-      </library>
-    </orderEntry>
     <orderEntry type="library" scope="TEST" name="Maven: junit:junit:3.8.1" level="project" />
-    <orderEntry type="module" module-name="adl-parser" />
-    <orderEntry type="module" module-name="model-am" />
+    <orderEntry type="library" name="Maven: org.openehr.adl2-core:adl-parser:1.0.0-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: org.openehr.adl2-core:model-am:1.0.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: com.google.guava:guava:18.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.findbugs:jsr305:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.antlr:antlr-runtime:3.5.2" level="project" />
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.4" level="project" />
-    <orderEntry type="module" module-name="model-rm" />
+    <orderEntry type="library" name="Maven: org.openehr.adl2-core:model-rm:1.0.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: commons-lang:commons-lang:2.6" level="project" />
     <orderEntry type="library" name="Maven: log4j:log4j:1.2.17" level="project" />
     <orderEntry type="module-library">
