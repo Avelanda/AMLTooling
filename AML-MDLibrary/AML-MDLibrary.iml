@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_7" inherit-compiler-output="false">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/target/test-classes" />
     <content url="file://$MODULE_DIR$">
@@ -11,76 +11,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="TEST" name="Maven: junit:junit:3.8.1" level="project" />
-    <orderEntry type="library" name="Maven: org.openehr.adl2-core:adl-parser:1.0.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: org.openehr.adl2-core:model-am:1.0.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: com.google.guava:guava:18.0" level="project" />
-    <orderEntry type="library" name="Maven: com.google.code.findbugs:jsr305:2.0.1" level="project" />
-    <orderEntry type="library" name="Maven: org.antlr:antlr-runtime:3.5.2" level="project" />
-    <orderEntry type="library" name="Maven: commons-io:commons-io:2.4" level="project" />
-    <orderEntry type="library" name="Maven: org.openehr.adl2-core:model-rm:1.0.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: commons-lang:commons-lang:2.6" level="project" />
-    <orderEntry type="library" name="Maven: log4j:log4j:1.2.17" level="project" />
-    <orderEntry type="module-library">
-      <library name="Maven: md_api:md_api:1.0">
-        <CLASSES>
-          <root url="jar:///Applications/Cameo Enterprise Architecture/lib/md_api.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="Maven: md:md:1.0">
-        <CLASSES>
-          <root url="jar:///Applications/Cameo Enterprise Architecture/lib/md.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="Maven: md_foundation:md_foundation:1.0">
-        <CLASSES>
-          <root url="jar:///Applications/Cameo Enterprise Architecture/lib/md_foundation_1.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="library" name="Maven: org.eclipse.emf:ecore:2.3.0-v200706262000" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.core:runtime:3.10.0-v20140318-2214" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse:osgi:3.10.0-v20140606-1445" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.equinox:common:3.6.200-v20130402-1505" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.core:jobs:3.6.0-v20140424-0053" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.equinox:registry:3.5.400-v20140428-1507" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.equinox:preferences:3.5.200-v20140224-1527" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.core:contenttype:3.4.200-v20140207-1251" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.equinox:app:1.3.200-v20130910-1609" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.emf:common:2.3.0-v200706262000" level="project" />
-    <orderEntry type="module-library">
-      <library name="Maven: jimi:jimi:1.0">
-        <CLASSES>
-          <root url="jar:///Applications/Cameo Enterprise Architecture/lib/javax_jmi-1_0-fr.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="Maven: uml2:uml2:1.0">
-        <CLASSES>
-          <root url="jar:///Applications/Cameo Enterprise Architecture/lib/uml2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="library" scope="TEST" name="Maven: org.testng:testng:6.8.8" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.beanshell:bsh:2.0b4" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: com.beust:jcommander:1.27" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.easytesting:fest-assert:1.4" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.easytesting:fest-util:1.1.6" level="project" />
   </component>
 </module>
 
