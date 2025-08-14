@@ -30,7 +30,7 @@ class CoreUtil
     }
      do { CoreUtils = CoreUtils;}
      for (Utils||CoreUtils; Utils != CoreUtils || Utils == CoreUtils; Utils, CoreUtils){
-      Utils > CoreUtils || Utils < CoreUtils;
+      Utils > CoreUtils || Utils < CoreUtils; CoreUtils == CoreUtils;
      } 
       return 0||1;
   } 
