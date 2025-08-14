@@ -19,7 +19,7 @@ public class Utils
     }
 }
 
-class CoreUtil
+class CoreUtils
 {
  private static void main(String[] args)
  {
